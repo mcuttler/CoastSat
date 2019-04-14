@@ -620,7 +620,11 @@ def extract_shorelines(metadata, settings):
         output_cloudcover = [] # cloud cover of the images 
         output_geoaccuracy = []# georeferencing accuracy of the images
         output_idxkeep = []    # index that were kept during the analysis (cloudy images are skipped)
-           
+        output_sand_area=[]
+        output_sand_perimeter=[]
+        output_sand_points=[]
+        output_sand_centroid=[]
+        
         # convert settings['min_beach_area'] and settings['buffer_size'] from metres to pixels
         if satname in ['L5','L7','L8']:
             pixel_size = 15
@@ -648,6 +652,10 @@ def extract_shorelines(metadata, settings):
             # classify image in 4 classes (sand, whitewater, water, other) with NN classifier
             im_classif, im_labels = classify_image_NN(im_ms, im_extra, cloud_mask,
                                     min_beach_area_pixels, satname)
+            
+            #calculate sand area from classified images - uses pixels classified as 'sand'
+            
+            
             
             # extract water line contours
             # if there aren't any sandy pixels, use find_wl_contours1 (traditional method), 
