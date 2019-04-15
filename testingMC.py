@@ -197,3 +197,16 @@ for i, dum in enumerate(output['dates']):
 
 for i,centroid in enumerate(output['sand_centroid']):
     plt.plot(test[i],centroid[0],'r.')
+
+#%%
+#Calculate when image is L8 or S2 and plot in different colors
+dum = output['satname']
+test=np.array([])
+test2=np.array([])
+for i in range(len(dum)):
+    test.append(dum[i]=='L8')
+    test2.append(dum[i]=='S2')
+
+plt.plot(output['dates'],output['sand_area'],'b.-')
+plt.plot(output['dates'][test],output['sand_area'][test],'r.')
+            
