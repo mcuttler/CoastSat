@@ -198,6 +198,7 @@ for i, dum in enumerate(output['dates']):
 for i,centroid in enumerate(output['sand_centroid']):
     plt.plot(test[i],centroid[0],'r.')
 
+<<<<<<< HEAD
 #%%
 #Calculate when image is L8 or S2 and plot in different colors
 dum = output['satname']
@@ -210,3 +211,25 @@ for i in range(len(dum)):
 plt.plot(output['dates'],output['sand_area'],'b.-')
 plt.plot(output['dates'][test],output['sand_area'][test],'r.')
             
+=======
+#%% check eva sat codes
+import matplotlib.pyplot as plt
+import matplotlib.lines as mlines
+plt.plot(output['dates'],output['sand_area'],'k-',linewidth=0.5)
+
+for i,sat in enumerate(output['satname']):
+    if sat == 'L8':
+       line1 = plt.plot(output['dates'][i],output['sand_area'][i],'r.')
+    else:
+        line2 = plt.plot(output['dates'][i],output['sand_area'][i],'b.')
+
+
+
+red_dot = mlines.Line2D([], [], color='red', marker='.',
+                          markersize=15, label='L8')
+
+blue_dot = mlines.Line2D([], [], color='blue', marker='.',
+                          markersize=15, label='S2')
+
+plt.legend(handles=[red_dot,blue_dot])
+>>>>>>> 5d2af27083a5284dc86764e26ee0245da16441f0
