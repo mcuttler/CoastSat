@@ -674,7 +674,10 @@ def extract_shorelines(metadata, settings):
             
             if sand_area>0:         
                 #conver to real world coordinates
-                sand_points = SDS_tools.convert_pix2world(sand_pix,georef)
+                sand_world = SDS_tools.convert_pix2world(sand_pix,georef)
+               
+                #from image_epsg to output_epsg
+                sand_points = SDS_tools.convert_epsg(sand_world, image_epsg, settings['output_epsg'])
               
                 #calculate centroid coordinates
                 xCenter = np.sum(sand_points[:,0])/len(sand_points[:,0])
