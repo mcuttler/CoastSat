@@ -32,7 +32,7 @@ Created on Wed Apr  3 09:26:17 2019
         output_geoaccuracy = []# georeferencing accuracy of the images
         output_idxkeep = []    # index that were kept during the analysis (cloudy images are skipped)
         output_sand_area=[]
-        output_sand_perimeter=[]
+        output_sand_contours=[]
         output_sand_points=[]
         output_sand_centroid=[]
            
@@ -45,21 +45,21 @@ Created on Wed Apr  3 09:26:17 2019
         min_beach_area_pixels = np.ceil(settings['min_beach_area']/pixel_size**2)
         
         # loop through the images
-        sand_contours = []
-        for i in range(len(filenames)):
+        #sand_contours = []
+        for i in range(len(filenames)-340):
             
             # get image filename
             fn = SDS_tools.get_filenames(filenames[i],filepath, satname)
             # preprocess image (cloud mask + pansharpening/downsampling)
-            im_ms, georef, cloud_mask, im_extra, imQA = SDS_preprocess.preprocess_single(fn, satname)
+            im_ms, georef, cloud_mask, im_extra, imQA = SDS_preprocess.preprocess_single(fn, satname, settings['cloud_mask_issue'])
             # get image spatial reference system (epsg code) from metadata dict
             image_epsg = metadata[satname]['epsg'][i]
             # calculate cloud cover
             cloud_cover = np.divide(sum(sum(cloud_mask.astype(int))),
                                     (cloud_mask.shape[0]*cloud_mask.shape[1]))
             # skip image if cloud cover is above threshold
-            #if cloud_cover > settings['cloud_thresh']:
-            #    continue
+            if cloud_cover > settings['cloud_thresh']:
+                continue
             
             # classify image in 4 classes (sand, whitewater, water, other) with NN classifier
             im_classif, im_labels = SDS_shoreline.classify_image_NN(im_ms, im_extra, cloud_mask,
@@ -102,7 +102,51 @@ Created on Wed Apr  3 09:26:17 2019
                         sand_contours.append(sand_contours_dum[D])
             else:
                 sand_points = np.zeros([])
-                sand_centroid = np.zeros([])                   
+                sand_centroid = np.zeros([])
+                sand_contours = np.zeros([])
+            
+      
+            
+            # fill and save outputput structure
+            output_timestamp.append(metadata[satname]['dates'][i])
+            output_shoreline.append(shoreline)
+            output_filename.append(filenames[i])
+            output_cloudcover.append(cloud_cover)
+            output_geoaccuracy.append(metadata[satname]['acc_georef'][i])
+            output_idxkeep.append(i)
+            output_sand_area.append(sand_area)
+            output_sand_contours.append(sand_contours)
+            output_sand_points.append(sand_points)
+            output_sand_centroid.append(sand_centroid)
+            
+        output[satname] = {
+                'timestamp': output_timestamp,
+                'shoreline': output_shoreline,
+                'filename': output_filename,
+                'cloudcover': output_cloudcover,
+                'geoaccuracy': output_geoaccuracy,
+                'idxkeep': output_idxkeep,
+                'sand_area': output_sand_area,
+                'sand_contours': output_sand_contours,
+                'sand_points': output_sand_points,
+                'sand_centroid': output_sand_centroid
+                }
+
+    # add some metadata
+    output['meta'] = {
+            'timestamp': 'UTC time',
+            'shoreline': 'coordinate system epsg : ' + str(settings['output_epsg']),
+            'cloudcover': 'calculated on the cropped image',
+            'geoaccuracy': 'RMSE error based on GCPs',
+            'idxkeep': 'indices of the images that were kept to extract a shoreline',
+            'sand_area': 'area of sandy pixels',
+            'sand_contours': 'boundaryes of sandy pixels',
+            'sand_points': 'real world coordinates of sandy pixels',
+            'sand_centroid': 'coordinates for center of mass of sandy pixels'
+            }
+    
+    # change the format to have one list sorted by date with all the shorelines (easier to use)
+    output = SDS_tools.merge_output(output)
 
 #%%
 sand_poly_pix = np.zeros([1,2])

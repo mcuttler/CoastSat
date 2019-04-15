@@ -1,0 +1,3 @@
+filename	2015-06-27-02-20-33_L8_ASHBURTON_pan.tif
+acc_georef	5.742
+epsg	32650

@@ -1,0 +1,3 @@
+filename	2018-05-10-02-32-48_S2_ASHBURTON_10m.tif
+acc_georef	1
+epsg	32750

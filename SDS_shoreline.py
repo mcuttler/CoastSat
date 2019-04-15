@@ -620,10 +620,10 @@ def extract_shorelines(metadata, settings):
         output_cloudcover = [] # cloud cover of the images 
         output_geoaccuracy = []# georeferencing accuracy of the images
         output_idxkeep = []    # index that were kept during the analysis (cloudy images are skipped)
-        output_sand_area=[]
-        output_sand_perimeter=[]
-        output_sand_points=[]
-        output_sand_centroid=[]
+        output_sand_area=[]    # sand area calculated from pixel classification (m^2)
+        output_sand_contours=[]  #boundaries of area classified as sand
+        output_sand_points=[]     #coordinates of sandy pixels
+        output_sand_centroid=[]   #coordinates of centroid (center of mass) of sandy pixels
         
         # convert settings['min_beach_area'] and settings['buffer_size'] from metres to pixels
         if satname in ['L5','L7','L8']:
@@ -654,7 +654,44 @@ def extract_shorelines(metadata, settings):
                                     min_beach_area_pixels, satname)
             
             #calculate sand area from classified images - uses pixels classified as 'sand'
+            im_sand2 = im_classif==1
             
+            #vectorize sand pixels
+            
+            rows,cols = im_sand2.shape
+            sand_pix = np.array([[-999,-999]],dtype=float)
+            
+            for ii in range(0,rows-1):    
+                for jj in range(0,cols-1):
+                    if im_sand2[ii,jj]==True:
+                        dum = np.array([[ii,jj]],dtype=float)
+                        sand_pix = np.concatenate((sand_pix,dum),axis=0)
+                        
+            rows,cols = sand_pix.shape           
+            sand_pix = sand_pix[1:rows,:]
+                        
+            sand_area = sum(im_classif[im_sand2])*pixel_size
+            
+            if sand_area>0:         
+                #conver to real world coordinates
+                sand_points = SDS_tools.convert_pix2world(sand_pix,georef)
+              
+                #calculate centroid coordinates
+                xCenter = np.sum(sand_points[:,0])/len(sand_points[:,0])
+                yCenter = np.sum(sand_points[:,1])/len(sand_points[:,1])
+                sand_centroid = np.array([xCenter,yCenter])
+                
+                #calculate inner and outer bounds of sand polygon
+                sand_contours_dum = measure.find_contours(im_sand2, 0.99)
+                min_contour_len = 50
+                sand_contours=[]
+                for D in range(len(sand_contours_dum)):
+                    if len(sand_contours_dum[D])>min_contour_len:
+                        sand_contours.append(sand_contours_dum[D])
+            else:
+                sand_points = np.zeros([])
+                sand_centroid = np.zeros([])   
+                sand_contours = np.zeros([])
             
             
             # extract water line contours
@@ -691,6 +728,10 @@ def extract_shorelines(metadata, settings):
             output_cloudcover.append(cloud_cover)
             output_geoaccuracy.append(metadata[satname]['acc_georef'][i])
             output_idxkeep.append(i)
+            output_sand_area.append(sand_area)
+            output_sand_contours.append(sand_contours)
+            output_sand_points.append(sand_points)
+            output_sand_centroid.append(sand_centroid)
             
         output[satname] = {
                 'timestamp': output_timestamp,
@@ -698,7 +739,11 @@ def extract_shorelines(metadata, settings):
                 'filename': output_filename,
                 'cloudcover': output_cloudcover,
                 'geoaccuracy': output_geoaccuracy,
-                'idxkeep': output_idxkeep
+                'idxkeep': output_idxkeep,
+                'sand_area': output_sand_area,
+                'sand_contours': output_sand_contours,
+                'sand_points': output_sand_points,
+                'sand_centroid': output_sand_centroid
                 }
 
     # add some metadata
@@ -707,7 +752,11 @@ def extract_shorelines(metadata, settings):
             'shoreline': 'coordinate system epsg : ' + str(settings['output_epsg']),
             'cloudcover': 'calculated on the cropped image',
             'geoaccuracy': 'RMSE error based on GCPs',
-            'idxkeep': 'indices of the images that were kept to extract a shoreline'
+            'idxkeep': 'indices of the images that were kept to extract a shoreline',
+            'sand_area': 'area of sandy pixels',
+            'sand_contours': 'boundaryes of sandy pixels',
+            'sand_points': 'real world coordinates of sandy pixels',
+            'sand_centroid': 'coordinates for center of mass of sandy pixels'
             }
     
     # change the format to have one list sorted by date with all the shorelines (easier to use)

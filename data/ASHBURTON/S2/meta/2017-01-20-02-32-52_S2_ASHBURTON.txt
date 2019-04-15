@@ -1,0 +1,3 @@
+filename	2017-01-20-02-32-52_S2_ASHBURTON_10m.tif
+acc_georef	1
+epsg	32750

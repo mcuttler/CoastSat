@@ -1,0 +1,3 @@
+filename	2014-10-14-02-21-26_L8_SUNDAY_pan.tif
+acc_georef	6.572
+epsg	32650

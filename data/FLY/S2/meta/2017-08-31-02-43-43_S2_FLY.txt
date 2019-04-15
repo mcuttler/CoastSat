@@ -1,0 +1,3 @@
+filename	2017-08-31-02-43-43_S2_FLY_10m.tif
+acc_georef	1
+epsg	32750

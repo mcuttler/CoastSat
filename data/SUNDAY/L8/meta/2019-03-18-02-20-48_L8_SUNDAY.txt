@@ -1,0 +1,3 @@
+filename	2019-03-18-02-20-48_L8_SUNDAY_pan.tif
+acc_georef	6.369
+epsg	32650

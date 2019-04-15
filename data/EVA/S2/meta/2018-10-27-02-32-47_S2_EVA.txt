@@ -1,0 +1,3 @@
+filename	2018-10-27-02-32-47_S2_EVA_10m.tif
+acc_georef	1
+epsg	32750

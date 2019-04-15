@@ -1,0 +1,3 @@
+filename	2018-03-15-02-20-46_L8_FLY_pan.tif
+acc_georef	5.75
+epsg	32650

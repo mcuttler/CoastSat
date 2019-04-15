@@ -1,0 +1,3 @@
+filename	2013-05-04-02-23-01_L8_ASHBURTON_pan.tif
+acc_georef	6.552
+epsg	32650

@@ -1,0 +1,3 @@
+filename	2016-12-04-02-43-41_S2_EVA_10m.tif
+acc_georef	1
+epsg	32750

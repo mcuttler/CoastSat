@@ -1,0 +1,3 @@
+filename	2018-11-09-02-43-52_S2_Y_10m.tif
+acc_georef	1
+epsg	32750

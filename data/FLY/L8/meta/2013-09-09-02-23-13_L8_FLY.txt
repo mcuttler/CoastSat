@@ -1,0 +1,3 @@
+filename	2013-09-09-02-23-13_L8_FLY_pan.tif
+acc_georef	6.099
+epsg	32650

@@ -1,0 +1,3 @@
+filename	2018-12-04-02-43-46_S2_FLY_10m.tif
+acc_georef	1
+epsg	32750

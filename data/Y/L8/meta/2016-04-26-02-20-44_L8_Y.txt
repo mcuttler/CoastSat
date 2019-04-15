@@ -1,0 +1,3 @@
+filename	2016-04-26-02-20-44_L8_Y_pan.tif
+acc_georef	6.27
+epsg	32650

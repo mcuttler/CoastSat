@@ -1,0 +1,3 @@
+filename	2016-05-12-02-20-44_L8_ASHBURTON_pan.tif
+acc_georef	5.805
+epsg	32650

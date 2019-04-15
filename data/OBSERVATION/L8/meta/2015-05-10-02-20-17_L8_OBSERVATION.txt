@@ -1,0 +1,3 @@
+filename	2015-05-10-02-20-17_L8_OBSERVATION_pan.tif
+acc_georef	6.126
+epsg	32650
