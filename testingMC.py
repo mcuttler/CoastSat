@@ -197,3 +197,24 @@ for i, dum in enumerate(output['dates']):
 
 for i,centroid in enumerate(output['sand_centroid']):
     plt.plot(test[i],centroid[0],'r.')
+
+#%% check eva sat codes
+import matplotlib.pyplot as plt
+import matplotlib.lines as mlines
+plt.plot(output['dates'],output['sand_area'],'k-',linewidth=0.5)
+
+for i,sat in enumerate(output['satname']):
+    if sat == 'L8':
+       line1 = plt.plot(output['dates'][i],output['sand_area'][i],'r.')
+    else:
+        line2 = plt.plot(output['dates'][i],output['sand_area'][i],'b.')
+
+
+
+red_dot = mlines.Line2D([], [], color='red', marker='.',
+                          markersize=15, label='L8')
+
+blue_dot = mlines.Line2D([], [], color='blue', marker='.',
+                          markersize=15, label='S2')
+
+plt.legend(handles=[red_dot,blue_dot])
