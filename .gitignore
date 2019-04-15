@@ -9,3 +9,4 @@
 *.pkl
 *.kml
 *checkpoint.ipynb
+data/EVA/jpg_files/detection/Thumbs.db

@@ -58,8 +58,8 @@ Created on Wed Apr  3 09:26:17 2019
             cloud_cover = np.divide(sum(sum(cloud_mask.astype(int))),
                                     (cloud_mask.shape[0]*cloud_mask.shape[1]))
             # skip image if cloud cover is above threshold
-            if cloud_cover > settings['cloud_thresh']:
-                continue
+            #if cloud_cover > settings['cloud_thresh']:
+            #    continue
             
             # classify image in 4 classes (sand, whitewater, water, other) with NN classifier
             im_classif, im_labels = SDS_shoreline.classify_image_NN(im_ms, im_extra, cloud_mask,
@@ -86,7 +86,10 @@ Created on Wed Apr  3 09:26:17 2019
             
             if sand_area>0:         
                 #conver to real world coordinates
-                sand_points = SDS_tools.convert_pix2world(sand_pix,georef)
+                sand_world = SDS_tools.convert_pix2world(sand_pix,georef)
+               
+                #from image_epsg to output_epsg
+                sand_points = SDS_tools.convert_epsg(sand_world, image_epsg, settings['output_epsg'])
               
                 #calculate centroid coordinates
                 xCenter = np.sum(sand_points[:,0])/len(sand_points[:,0])
@@ -109,7 +112,7 @@ Created on Wed Apr  3 09:26:17 2019
             
             # fill and save outputput structure
             output_timestamp.append(metadata[satname]['dates'][i])
-            output_shoreline.append(shoreline)
+            #output_shoreline.append(shoreline)
             output_filename.append(filenames[i])
             output_cloudcover.append(cloud_cover)
             output_geoaccuracy.append(metadata[satname]['acc_georef'][i])
