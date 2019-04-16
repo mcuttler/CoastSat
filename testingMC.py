@@ -97,7 +97,7 @@ Created on Wed Apr  3 09:26:17 2019
                 sand_centroid = np.array([xCenter,yCenter])
                 
                 #calculate inner and outer bounds of sand polygon
-                sand_contours_dum2 = measure.find_contours(im_classif, 1)
+                sand_contours_dum = measure.find_contours(im_sand2, 0.99)
                 min_contour_len = 50
                 sand_contours=[]
                 for D in range(len(sand_contours_dum)):
@@ -220,10 +220,10 @@ plt.plot(output['dates'],output['sand_area'],'k-',linewidth=0.5)
 for i,sat in enumerate(output['satname']):
     if sat == 'L8':
         plt.plot(output['dates'][i],output['sand_area'][i],'r.')
-        plt.plot(output['dates'][i],sand_area2[i],'r*')
+       # plt.plot(output['dates'][i],sand_area2[i],'r*')
     else:
         plt.plot(output['dates'][i],output['sand_area'][i],'b.')
-        plt.plot(output['dates'][i],sand_area2[i],'b*')
+        #plt.plot(output['dates'][i],sand_area2[i],'b*')
 
 plt.grid()
 plt.ylabel('sub-aerial sand area (m^2)')
@@ -235,6 +235,8 @@ blue_dot = mlines.Line2D([], [], color='blue', marker='.',
                           markersize=15, label='S2')
 
 plt.legend(handles=[red_dot,blue_dot])
+plt.title('Fly Island')
+
 
 #%% re calculate sand_area for L8 satellites using 30m pix
 sand_area = output['sand_area']
