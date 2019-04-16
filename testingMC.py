@@ -211,7 +211,7 @@ for i in range(len(dum)):
 plt.plot(output['dates'],output['sand_area'],'b.-')
 plt.plot(output['dates'][test],output['sand_area'][test],'r.')
             
-=======
+
 #%% check eva sat codes
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
@@ -219,11 +219,14 @@ plt.plot(output['dates'],output['sand_area'],'k-',linewidth=0.5)
 
 for i,sat in enumerate(output['satname']):
     if sat == 'L8':
-       line1 = plt.plot(output['dates'][i],output['sand_area'][i],'r.')
+        plt.plot(output['dates'][i],output['sand_area'][i],'r.')
+        plt.plot(output['dates'][i],sand_area2[i],'r*')
     else:
-        line2 = plt.plot(output['dates'][i],output['sand_area'][i],'b.')
+        plt.plot(output['dates'][i],output['sand_area'][i],'b.')
+        plt.plot(output['dates'][i],sand_area2[i],'b*')
 
-
+plt.grid()
+plt.ylabel('sub-aerial sand area (m^2)')
 
 red_dot = mlines.Line2D([], [], color='red', marker='.',
                           markersize=15, label='L8')
@@ -232,4 +235,12 @@ blue_dot = mlines.Line2D([], [], color='blue', marker='.',
                           markersize=15, label='S2')
 
 plt.legend(handles=[red_dot,blue_dot])
->>>>>>> 5d2af27083a5284dc86764e26ee0245da16441f0
+
+#%% re calculate sand_area for L8 satellites using 30m pix
+sand_area = output['sand_area']
+sand_area2 = np.array(output['sand_area'],dtype=float)
+for i,satname in enumerate(output['satname']):
+    if satname == 'L8':
+        sand_area2[i]=output['sand_area'][i]*2
+
+        
