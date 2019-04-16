@@ -19,28 +19,28 @@ Created on Wed Apr  3 09:26:17 2019
     
     # loop through satellite list
     #for satname in metadata.keys():
-       satname = 'S2' 
-       # get images
-       filepath = SDS_tools.get_filepath(settings['inputs'],satname)
-       filenames = metadata[satname]['filenames']
+    satname = 'S2' 
+    # get images
+    filepath = SDS_tools.get_filepath(settings['inputs'],satname)
+    filenames = metadata[satname]['filenames']
 
-        # initialise some variables
-        output_timestamp = []  # datetime at which the image was acquired (UTC time)
-        output_shoreline = []  # vector of shoreline points 
-        output_filename = []   # filename of the images from which the shorelines where derived
-        output_cloudcover = [] # cloud cover of the images 
-        output_geoaccuracy = []# georeferencing accuracy of the images
-        output_idxkeep = []    # index that were kept during the analysis (cloudy images are skipped)
-        output_sand_area=[]
-        output_sand_contours=[]
-        output_sand_points=[]
-        output_sand_centroid=[]
+    # initialise some variables
+    output_timestamp = []  # datetime at which the image was acquired (UTC time)
+    output_shoreline = []  # vector of shoreline points 
+    output_filename = []   # filename of the images from which the shorelines where derived
+    output_cloudcover = [] # cloud cover of the images 
+    output_geoaccuracy = []# georeferencing accuracy of the images
+    output_idxkeep = []    # index that were kept during the analysis (cloudy images are skipped)
+    output_sand_area=[]
+    output_sand_contours=[]
+    output_sand_points=[]
+    output_sand_centroid=[]
            
         # convert settings['min_beach_area'] and settings['buffer_size'] from metres to pixels
         #if satname in ['L5','L7','L8']:
         #    pixel_size = 15
         #elif satname == 'S2':
-            pixel_size = 10
+        pixel_size = 10
         buffer_size_pixels = np.ceil(settings['buffer_size']/pixel_size)
         min_beach_area_pixels = np.ceil(settings['min_beach_area']/pixel_size**2)
         
@@ -97,7 +97,7 @@ Created on Wed Apr  3 09:26:17 2019
                 sand_centroid = np.array([xCenter,yCenter])
                 
                 #calculate inner and outer bounds of sand polygon
-                sand_contours_dum = measure.find_contours(im_sand2, 0.99)
+                sand_contours_dum2 = measure.find_contours(im_classif, 1)
                 min_contour_len = 50
                 sand_contours=[]
                 for D in range(len(sand_contours_dum)):
