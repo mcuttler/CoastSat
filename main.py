@@ -13,7 +13,8 @@ import pickle
 import warnings
 warnings.filterwarnings("ignore")
 import matplotlib.pyplot as plt
-import SDS_download, SDS_preprocess, SDS_shoreline, SDS_tools, SDS_transects
+import SDS_download, SDS_preprocess, SDS_tools, SDS_transects
+import SDS_shoreline_KV as SDS_shoreline
 
 # region of interest (longitude, latitude in WGS84), can be loaded from a .kml polygon
 polygon = SDS_tools.coords_from_kml('EVA.kml')
@@ -28,7 +29,7 @@ sat_list = ['L8','S2']
 sitename = 'EVA'
 
 # filepath where data will be stored
-filepath_data = os.path.join(os.getcwd(), 'data')
+filepath_data = os.path.join(os.getcwd(), 'test_kilian')
 
 # put all the inputs into a dictionnary
 inputs = {
@@ -47,14 +48,24 @@ inputs = {
 # if you have already downloaded the images, just load the metadata file
 filepath = os.path.join(inputs['filepath'], sitename)
 with open(os.path.join(filepath, sitename + '_metadata' + '.pkl'), 'rb') as f:
-    metadata = pickle.load(f) 
-    
+    metadata = pickle.load(f)
+
+##################################################################################################
+# create a subset of the metadata for testing
+n = 100 # number of images
+metadata.pop('S2')
+metadata2 = dict([])
+metadata2['L8'] = dict([])
+for key in metadata['L8'].keys():
+    metadata2['L8'][key] =  [metadata['L8'][key][i] for i in range(n)]
+##################################################################################################
+
 #%% 3. Batch shoreline detection
     
 # settings for the shoreline extraction
 settings = { 
     # general parameters:
-    'cloud_thresh': 0.5,        # threshold on maximum cloud cover
+    'cloud_thresh': 0,        # threshold on maximum cloud cover
     'output_epsg': 28350,       # epsg code of spatial reference system desired for the output - 28350 = GDA94 zone 50
     # quality control:
     'check_detection': False,    # if True, shows each shoreline detection to the user for validation
@@ -76,7 +87,7 @@ settings['reference_shoreline'] = SDS_preprocess.get_reference_sl_manual(metadat
 settings['max_dist_ref'] = 100        
 
 # extract shorelines from all images (also saves output.pkl and shorelines.kml)
-output = SDS_shoreline.extract_shorelines(metadata, settings)
+output = SDS_shoreline.extract_shorelines(metadata2, settings)
 
 #%% make figures showing timeseries of beach area and centroid movement
 
