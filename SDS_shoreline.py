@@ -33,6 +33,10 @@ from pylab import ginput
 import pickle
 import simplekml
 
+#sand polygon module
+from shapely.geometry import Polygon
+from shapely.geometry.polygon import LinearRing
+
 # own modules
 import SDS_tools, SDS_preprocess
 
@@ -661,39 +665,42 @@ def extract_shorelines(metadata, settings):
             # if the classifier does not detect sand pixels
             if sum(sum(im_labels[:,:,0])) == 0:
                 continue
-            
+            ##################################################################
             #calculate sand area, sand perimeter and save - MCuttler (2019)
-            im_sand2 = im_classif==1
-            rows,cols = im_sand2.shape
-            sand_pix = np.array([[-999,-999]],dtype=float)
+            ##################################################################
+            ##################################################################
             
-            for ii in range(0,rows-1):    
-                for jj in range(0,cols-1):
-                    if im_sand2[ii,jj]==True:
-                        dum = np.array([[ii,jj]],dtype=float)
-                        sand_pix = np.concatenate((sand_pix,dum),axis=0)
+            #im_sand2 = im_classif==1
+            #rows,cols = im_sand2.shape
+            #sand_pix = np.array([[-999,-999]],dtype=float)
+            
+            #for ii in range(0,rows-1):    
+            #    for jj in range(0,cols-1):
+            #        if im_sand2[ii,jj]==True:
+            #            dum = np.array([[ii,jj]],dtype=float)
+            #            sand_pix = np.concatenate((sand_pix,dum),axis=0)
                         
-            rows,cols = sand_pix.shape           
-            sand_pix = sand_pix[1:rows,:]
+            #rows,cols = sand_pix.shape           
+            #sand_pix = sand_pix[1:rows,:]
                         
-            sand_area = sum(im_classif[im_sand2])*pixel_size
-            if sand_area>0:
+            #sand_area = sum(im_classif[im_sand2])*pixel_size
+            #if sand_area>0:
                 #calculate perimeter of sand area by contouring classified image
                 #sand_per_pix=np.array(measure.find_contours(im_classif,1))
                 #sand_per_pix = np.reshape(sand_per_pix,(sand_per_pix.shape[1],2))
                         
                 #conver to real world coordinates
-                sand_points = SDS_tools.convert_pix2world(sand_pix,georef)
+           #     sand_points = SDS_tools.convert_pix2world(sand_pix,georef)
                 #sand_perimeter = SDS_tools.convert_pix2world(sand_per_pix,georef)
             
                 #calculate centroid coordinates
-                xCenter = np.sum(sand_points[:,0])/len(sand_points[:,0])
-                yCenter = np.sum(sand_points[:,1])/len(sand_points[:,1])
-                sand_centroid = np.array([xCenter,yCenter])
-            else:
-                sand_points = np.empty([])
-                #sand_perimeter = np.empty([])
-                sand_centroid = np.empty([])
+            #    xCenter = np.sum(sand_points[:,0])/len(sand_points[:,0])
+            #    yCenter = np.sum(sand_points[:,1])/len(sand_points[:,1])
+            #    sand_centroid = np.array([xCenter,yCenter])
+            #else:
+            #    sand_points = np.empty([])
+            #    #sand_perimeter = np.empty([])
+            #    sand_centroid = np.empty([])
 
             #######################################################################################
             # SAND POLYGONS (kilian)
@@ -745,7 +752,8 @@ def extract_shorelines(metadata, settings):
             
             linear_ring = LinearRing(coordinates=sand_contours_coords)
             sand_polygon = Polygon(shell=linear_ring, holes=None)
-            
+            sand_area = sand_polygon.area
+            sand_centroid = np.reshape(np.array(sand_polygon.centroid.coords.xy),[1,2])
             #######################################################################################
             #######################################################################################         
                 
@@ -785,6 +793,8 @@ def extract_shorelines(metadata, settings):
             output_geoaccuracy.append(metadata[satname]['acc_georef'][i])
             output_idxkeep.append(i)
             output_sand_polygon.append(sand_polygon)
+            output_sand_area.append(sand_area)
+            output_sand_centroid.append(sand_centroid)
             
         # create dictionnary of output
         output[satname] = {
@@ -794,7 +804,8 @@ def extract_shorelines(metadata, settings):
                 'cloud_cover': output_cloudcover,
                 'geoaccuracy': output_geoaccuracy,
                 'idx': output_idxkeep,
-                'sand_polygons': sand_polygon,
+                'sand_polygons': output_sand_polygon,
+                'sand_area':output_sand_area
                 }
     # change the format to have one list sorted by date with all the shorelines (easier to use)
     output = SDS_tools.merge_output(output)

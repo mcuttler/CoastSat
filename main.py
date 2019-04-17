@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 import SDS_download, SDS_preprocess, SDS_shoreline, SDS_tools, SDS_transects
 
 # region of interest (longitude, latitude in WGS84), can be loaded from a .kml polygon
-polygon = SDS_tools.coords_from_kml('FLY.kml')
+polygon = SDS_tools.coords_from_kml('EVA.kml')
             
 # date range
 dates = ['2013-01-01', '2019-05-01']
@@ -25,7 +25,7 @@ dates = ['2013-01-01', '2019-05-01']
 sat_list = ['L8','S2']
 
 # name of the site
-sitename = 'FLY'
+sitename = 'EVA'
 
 # filepath where data will be stored
 filepath_data = os.path.join(os.getcwd(), 'data')
@@ -68,7 +68,7 @@ settings = {
 }
 
 # [OPTIONAL] preprocess images (cloud masking, pansharpening/down-sampling)
-SDS_preprocess.save_jpg(metadata, settings)
+#SDS_preprocess.save_jpg(metadata, settings)
 
 # [OPTIONAL] create a reference shoreline (helps to identify outliers and false detections)
 settings['reference_shoreline'] = SDS_preprocess.get_reference_sl_manual(metadata, settings)
