@@ -713,26 +713,26 @@ def extract_shorelines(metadata, settings):
             sand_contours = measure.find_contours(im_binary_sand_closed, 0.5)
 
             
-            plt.figure()
-            mng = plt.get_current_fig_manager()                                         
-            mng.window.showMaximized()
-            ax0 = plt.subplot(131)
-            ax0.axis('off')
-            im_RGB = SDS_preprocess.rescale_image_intensity(im_ms[:,:,[2,1,0]], cloud_mask, 99.9)
-            ax0.imshow(im_RGB)
-            ax0.set_title('RGB', fontweight='bold')
-            ax1 = plt.subplot(132, sharex=ax0, sharey=ax0)
-            ax1.axis('off')
-            ax1.imshow(im_binary_sand,cmap='gray')
-            ax1.set_title('sand pixels', fontweight='bold')
-            ax2 = plt.subplot(133, sharex=ax0, sharey=ax0)
-            ax2.axis('off')
-            ax2.imshow(im_binary_sand_closed, cmap='gray')
-            ax2.set_title('sand polygon', fontweight='bold')
-            for k in range(len(sand_contours)):
-                ax2.plot(sand_contours[k][:,1], sand_contours[k][:,0], 'r-', linewidth=2.5)
-                ax1.plot(sand_contours[k][:,1], sand_contours[k][:,0], 'r-', linewidth=2.5)
-                ax0.plot(sand_contours[k][:,1], sand_contours[k][:,0], 'k--', linewidth=1.5)
+            #plt.figure()
+            #mng = plt.get_current_fig_manager()                                         
+            #mng.window.showMaximized()
+            #ax0 = plt.subplot(131)
+            #ax0.axis('off')
+            #im_RGB = SDS_preprocess.rescale_image_intensity(im_ms[:,:,[2,1,0]], cloud_mask, 99.9)
+            #ax0.imshow(im_RGB)
+            #ax0.set_title('RGB', fontweight='bold')
+            #ax1 = plt.subplot(132, sharex=ax0, sharey=ax0)
+            #ax1.axis('off')
+            #ax1.imshow(im_binary_sand,cmap='gray')
+            #ax1.set_title('sand pixels', fontweight='bold')
+            #ax2 = plt.subplot(133, sharex=ax0, sharey=ax0)
+            #ax2.axis('off')
+            #ax2.imshow(im_binary_sand_closed, cmap='gray')
+            #ax2.set_title('sand polygon', fontweight='bold')
+            #for k in range(len(sand_contours)):
+            #    ax2.plot(sand_contours[k][:,1], sand_contours[k][:,0], 'r-', linewidth=2.5)
+            #    ax1.plot(sand_contours[k][:,1], sand_contours[k][:,0], 'r-', linewidth=2.5)
+            #    ax0.plot(sand_contours[k][:,1], sand_contours[k][:,0], 'k--', linewidth=1.5)
 
 #            im_binary_sand2 = morphology.binary_dilation(im_binary_sand, morphology.diamond(1))
 #            im_binary_sand3 = morphology.binary_dilation(im_binary_sand, morphology.diamond(2))
@@ -805,7 +805,8 @@ def extract_shorelines(metadata, settings):
                 'geoaccuracy': output_geoaccuracy,
                 'idx': output_idxkeep,
                 'sand_polygons': output_sand_polygon,
-                'sand_area':output_sand_area
+                'sand_area': output_sand_area,
+                'sand_centroid': output_sand_centroid
                 }
     # change the format to have one list sorted by date with all the shorelines (easier to use)
     output = SDS_tools.merge_output(output)
@@ -828,14 +829,14 @@ def extract_shorelines(metadata, settings):
     kml.save(os.path.join(filepath, sitename + '_output.kml'))  
     
     # save sand polygons as kml
-    kml = simplekml.Kml()
-    for i in range(len(output['sand_polygons'])):
-        if len(output['sand_polygons'][i]) == 0:
-            continue
-        sl = np.array(output['sand_polygons'][i].exterior.coords)
-        date = output['dates'][i]
-        newline = kml.newpolygon(name=date.strftime('%Y-%m-%d %H:%M:%S'), outerboundaryis=sl)
-        newline.description = satname + ' shoreline' + '\n' + 'acquired at ' + date.strftime('%H:%M:%S') + ' UTC'
-    kml.save(os.path.join(filepath, sitename + '_sand_polygons.kml')) 
+    #kml = simplekml.Kml()
+    #for i in range(len(output['sand_polygons'])):
+    #    if len(output['sand_polygons'][i]) == 0:
+    #        continue
+    #    sl = np.array(output['sand_polygons'][i].exterior.coords)
+    #    date = output['dates'][i]
+    #    newline = kml.newpolygon(name=date.strftime('%Y-%m-%d %H:%M:%S'), outerboundaryis=sl)
+    #   newline.description = satname + ' shoreline' + '\n' + 'acquired at ' + date.strftime('%H:%M:%S') + ' UTC'
+    #kml.save(os.path.join(filepath, sitename + '_sand_polygons.kml')) 
         
     return output

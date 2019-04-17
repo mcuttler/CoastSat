@@ -57,7 +57,7 @@ settings = {
     'cloud_thresh': 0.5,        # threshold on maximum cloud cover
     'output_epsg': 28350,       # epsg code of spatial reference system desired for the output - 28350 = GDA94 zone 50
     # quality control:
-    'check_detection': True,    # if True, shows each shoreline detection to the user for validation
+    'check_detection': False,    # if True, shows each shoreline detection to the user for validation
     # add the inputs defined previously
     'inputs': inputs,
     # [ONLY FOR ADVANCED USERS] shoreline detection parameters:
