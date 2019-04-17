@@ -16,57 +16,54 @@ import matplotlib.pyplot as plt
 import SDS_download, SDS_preprocess, SDS_shoreline, SDS_tools, SDS_transects
 
 # region of interest (longitude, latitude in WGS84), can be loaded from a .kml polygon
-polygon = SDS_tools.coords_from_kml('NARRA_polygon.kml')
-#polygon = [[[151.301454, -33.700754],
-#            [151.311453, -33.702075],
-#            [151.307237, -33.739761],
-#            [151.294220, -33.736329],
-#            [151.301454, -33.700754]]]
+polygon = SDS_tools.coords_from_kml('FLY.kml')
             
 # date range
-dates = ['2017-12-01', '2018-02-01']
+dates = ['2013-01-01', '2019-05-01']
 
 # satellite missions
 sat_list = ['L8','S2']
 
 # name of the site
-sitename = 'NARRA'
+sitename = 'FLY'
+
+# filepath where data will be stored
+filepath_data = os.path.join(os.getcwd(), 'data')
 
 # put all the inputs into a dictionnary
 inputs = {
     'polygon': polygon,
     'dates': dates,
     'sat_list': sat_list,
-    'sitename': sitename
+    'sitename': sitename,
+    'filepath': filepath_data
         }
 
 #%% 2. Retrieve images
 
 # retrieve satellite images from GEE
-metadata = SDS_download.retrieve_images(inputs)
+#metadata = SDS_download.retrieve_images(inputs)
 
 # if you have already downloaded the images, just load the metadata file
-#filepath = os.path.join(os.getcwd(), 'data', sitename)
-#with open(os.path.join(filepath, sitename + '_metadata' + '.pkl'), 'rb') as f:
-#    metadata = pickle.load(f) 
+filepath = os.path.join(inputs['filepath'], sitename)
+with open(os.path.join(filepath, sitename + '_metadata' + '.pkl'), 'rb') as f:
+    metadata = pickle.load(f) 
     
 #%% 3. Batch shoreline detection
     
 # settings for the shoreline extraction
 settings = { 
     # general parameters:
-    'cloud_thresh': 0.2,        # threshold on maximum cloud cover
-    'output_epsg': 28356,       # epsg code of spatial reference system desired for the output   
+    'cloud_thresh': 0.5,        # threshold on maximum cloud cover
+    'output_epsg': 28350,       # epsg code of spatial reference system desired for the output - 28350 = GDA94 zone 50
     # quality control:
     'check_detection': True,    # if True, shows each shoreline detection to the user for validation
-
     # add the inputs defined previously
     'inputs': inputs,
-    
     # [ONLY FOR ADVANCED USERS] shoreline detection parameters:
-    'min_beach_area': 4500,     # minimum area (in metres^2) for an object to be labelled as a beach
-    'buffer_size': 150,         # radius (in metres) of the buffer around sandy pixels considered in the shoreline detection
-    'min_length_sl': 200,       # minimum length (in metres) of shoreline perimeter to be valid
+    'min_beach_area': 50,     # minimum area (in metres^2) for an object to be labelled as a beach
+    'buffer_size': 100,         # radius (in metres) of the buffer around sandy pixels considered in the shoreline detection
+    'min_length_sl': 500,       # minimum length (in metres) of shoreline perimeter to be valid
     'cloud_mask_issue': False,  # switch this parameter to True if sand pixels are masked (in black) on many images  
 }
 
@@ -81,25 +78,90 @@ settings['max_dist_ref'] = 100
 # extract shorelines from all images (also saves output.pkl and shorelines.kml)
 output = SDS_shoreline.extract_shorelines(metadata, settings)
 
-# plot the mapped shorelines
+#%% make figures showing timeseries of beach area and centroid movement
+
 fig = plt.figure()
-plt.axis('equal')
-plt.xlabel('Eastings')
-plt.ylabel('Northings')
-plt.grid(linestyle=':', color='0.5')
-for i in range(len(output['shorelines'])):
-    sl = output['shorelines'][i]
-    date = output['dates'][i]
-    plt.plot(sl[:,0], sl[:,1], '.', label=date.strftime('%d-%m-%Y'))
+plt.plot(output['dates'],output['sand_area'],'b-x')
+plt.grid('on')
+plt.xlabel('Date')
+plt.ylabel('Sub-aerial sand area (m^2)')
+fig.set_size_inches([8,  4])
+
+#plot centroid data
+
+from matplotlib import gridspec
+import numpy as np
+fig = plt.figure()
+gs = gridspec.GridSpec(2,1)
+#gs.update(left=0.05, right=0.95, bottom=0.05, top=0.95, hspace=0.05)
+ax1 = fig.add_subplot(gs[0,0])
+for i, coords in enumerate(output['sand_centroid']):
+    plt.plot(coords[0],coords[1],'b.')
+plt.grid('on')
+plt.xlabel('Easting (m)');
+plt.ylabel('Northing (m)');
+plt.title('Centroid Movement')
+
+ax2 = fig.add_subplot(gs[1,0])
+#EvaCenter = [234731.70, 7573554.25]
+FlyCenter = [246858.55, 7586598.73]
+centroidX = []
+centroidY = []
+for i,dum in enumerate(output['sand_centroid']):
+    centroidX.append([dum[0]-FlyCenter[0]])
+    centroidY.append([dum[1]-FlyCenter[1]])
+centroidX = np.array(centroidX)
+centroidY = np.array(centroidY)
+#plot change in East/West coordinate of centroid (compared to island center)
+plt.plot(output['dates'],centroidX,'b-',label='East-West movement')
+
+#plot change in North/South coordinate of centroid (compared to island center)
+plt.plot(output['dates'],centroidY,'r-',label='North-South movement')
+plt.grid('on')
 plt.legend()
-mng = plt.get_current_fig_manager()                                         
-mng.window.showMaximized()    
-fig.set_size_inches([15.76,  8.52])
+plt.xlabel('Date')
+plt.ylabel('Change in centroid coordinate (m)')
+
+fig.set_size_inches([8,  6])
+l,b,w,h = ax1.get_position().bounds
+ax1.set_position([l,b+0.05,w,h])
+
+#%% make a figure of the time coverage
+from matplotlib import gridspec
+from matplotlib import patches as mpatches
+fig = plt.figure()
+ax1 = fig.add_subplot(111)
+ax1.yaxis.grid(linestyle=':', color='0.5')
+ax1.set_ylabel('# images')
+years = np.arange(output['dates'][0].year, output['dates'][-1].year+1)
+im_counts = dict([])
+total_sum = 0
+for year in years:
+    im_counts[str(year)] = dict([])
+    for satname in np.unique(output['satname']):
+        idx_year = [_.year == year for _ in output['dates']]
+        idx_satname = [_ == satname for _ in output['satname']]
+        idx = np.logical_and(idx_year, idx_satname)
+        im_counts[str(year)][satname] = sum(idx)
+        total_sum = total_sum + sum(idx)
+        if satname == 'L8': 
+            barcolor = 'C0'
+            ax1.bar(year, height=sum(idx), color=barcolor)                     
+        elif satname == 'S2': 
+            barcolor = 'C1'
+            ax1.bar(year, height=sum(idx), color=barcolor, bottom=im_counts[str(year)]['L8'])                                     
+blue = mpatches.Patch(color='C0', label='L8')
+orange = mpatches.Patch(color='C1', label='S2')
+ax1.legend(handles=[blue, orange], loc=2) 
+average = total_sum/len(years)
+plt.title('%d images, %.2f images / year' % (len(output['dates']), average))
+
+
 
 #%% 4. Shoreline analysis
 
 # if you have already mapped the shorelines, load the output.pkl file
-filepath = os.path.join(os.getcwd(), 'data', sitename)
+filepath = os.path.join(inputs['filepath'], sitename)
 with open(os.path.join(filepath, sitename + '_output' + '.pkl'), 'rb') as f:
     output = pickle.load(f) 
 
