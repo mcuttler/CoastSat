@@ -13,8 +13,8 @@ import pickle
 import warnings
 warnings.filterwarnings("ignore")
 import matplotlib.pyplot as plt
-import SDS_download, SDS_preprocess, SDS_tools, SDS_transects
-import SDS_shoreline_KV as SDS_shoreline
+import SDS_download, SDS_preprocess, SDS_tools, SDS_transects, SDS_shoreline
+
 
 # region of interest (longitude, latitude in WGS84), can be loaded from a .kml polygon
 polygon = SDS_tools.coords_from_kml('EVA.kml')
@@ -29,7 +29,7 @@ sat_list = ['L8','S2']
 sitename = 'EVA'
 
 # filepath where data will be stored
-filepath_data = os.path.join(os.getcwd(), 'test_kilian')
+filepath_data = os.path.join(os.getcwd(), 'data')
 
 # put all the inputs into a dictionnary
 inputs = {
@@ -52,12 +52,12 @@ with open(os.path.join(filepath, sitename + '_metadata' + '.pkl'), 'rb') as f:
 
 ##################################################################################################
 # create a subset of the metadata for testing
-n = 100 # number of images
-metadata.pop('S2')
-metadata2 = dict([])
-metadata2['L8'] = dict([])
-for key in metadata['L8'].keys():
-    metadata2['L8'][key] =  [metadata['L8'][key][i] for i in range(n)]
+#n = 100 # number of images
+#metadata.pop('S2')
+#metadata2 = dict([])
+#metadata2['L8'] = dict([])
+#for key in metadata['L8'].keys():
+#    metadata2['L8'][key] =  [metadata['L8'][key][i] for i in range(n)]
 ##################################################################################################
 
 #%% 3. Batch shoreline detection
@@ -68,7 +68,7 @@ settings = {
     'cloud_thresh': 0,        # threshold on maximum cloud cover
     'output_epsg': 28350,       # epsg code of spatial reference system desired for the output - 28350 = GDA94 zone 50
     # quality control:
-    'check_detection': False,    # if True, shows each shoreline detection to the user for validation
+    'check_detection': True,    # if True, shows each shoreline detection to the user for validation
     # add the inputs defined previously
     'inputs': inputs,
     # [ONLY FOR ADVANCED USERS] shoreline detection parameters:
