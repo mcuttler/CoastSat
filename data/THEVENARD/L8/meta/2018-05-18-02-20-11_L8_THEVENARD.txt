@@ -1,0 +1,3 @@
+filename	2018-05-18-02-20-11_L8_THEVENARD_pan.tif
+acc_georef	6.154
+epsg	32650

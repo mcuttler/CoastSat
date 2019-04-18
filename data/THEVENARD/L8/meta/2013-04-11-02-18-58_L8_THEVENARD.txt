@@ -1,0 +1,3 @@
+filename	2013-04-11-02-18-58_L8_THEVENARD_pan.tif
+acc_georef	6.52
+epsg	32650

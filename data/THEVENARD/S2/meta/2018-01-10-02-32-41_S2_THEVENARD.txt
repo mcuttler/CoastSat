@@ -1,0 +1,3 @@
+filename	2018-01-10-02-32-41_S2_THEVENARD_10m.tif
+acc_georef	1
+epsg	32750
