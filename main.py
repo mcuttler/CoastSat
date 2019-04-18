@@ -16,16 +16,16 @@ import matplotlib.pyplot as plt
 import SDS_download, SDS_preprocess, SDS_tools, SDS_transects, SDS_shoreline
 
 # region of interest (longitude, latitude in WGS84), can be loaded from a .kml polygon
-polygon = SDS_tools.coords_from_kml('THEVENARD.kml')
+polygon = SDS_tools.coords_from_kml('PORT_HEDLAND.kml')
             
 # date range
-dates = ['2013-01-01', '2019-05-01']
+dates = ['1985-01-01', '2019-05-01']
 
 # satellite missions
-sat_list = ['L8','S2']
+sat_list = ['L5','L7','L8','S2']
 
 # name of the site
-sitename = 'THEVENARD'
+sitename = 'PORT_HEDLAND'
 
 # filepath where data will be stored
 filepath_data = os.path.join(os.getcwd(), 'data')
