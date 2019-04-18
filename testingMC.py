@@ -7,47 +7,52 @@ Created on Wed Apr  3 09:26:17 2019
 #%% Edits to add to SDS_shoreline.extract_shoreline
 
     sitename = settings['inputs']['sitename']
-    
+    filepath_data = settings['inputs']['filepath']
     # initialise output structure
     output = dict([])
     # create a subfolder to store the .jpg images showing the detection
-    filepath_jpg = os.path.join(os.getcwd(), 'data', sitename, 'jpg_files', 'detection')
-    try:
-        os.makedirs(filepath_jpg)
-    except:
-        print('')
+    filepath_jpg = os.path.join(filepath_data, sitename, 'jpg_files', 'detection')
+    if not os.path.exists(filepath_jpg):      
+            os.makedirs(filepath_jpg)
     
+    print('Mapping shorelines:')
+
     # loop through satellite list
     #for satname in metadata.keys():
-    satname = 'S2' 
-    # get images
-    filepath = SDS_tools.get_filepath(settings['inputs'],satname)
-    filenames = metadata[satname]['filenames']
+        satname = 'S2'    
+        # get images
+        filepath = SDS_tools.get_filepath(settings['inputs'],satname)
+        filenames = metadata[satname]['filenames']
 
-    # initialise some variables
-    output_timestamp = []  # datetime at which the image was acquired (UTC time)
-    output_shoreline = []  # vector of shoreline points 
-    output_filename = []   # filename of the images from which the shorelines where derived
-    output_cloudcover = [] # cloud cover of the images 
-    output_geoaccuracy = []# georeferencing accuracy of the images
-    output_idxkeep = []    # index that were kept during the analysis (cloudy images are skipped)
-    output_sand_area=[]
-    output_sand_contours=[]
-    output_sand_points=[]
-    output_sand_centroid=[]
-           
-        # convert settings['min_beach_area'] and settings['buffer_size'] from metres to pixels
-        #if satname in ['L5','L7','L8']:
-        #    pixel_size = 15
-        #elif satname == 'S2':
-        pixel_size = 10
+        # initialise some variables
+        output_timestamp = []  # datetime at which the image was acquired (UTC time)
+        output_shoreline = []  # vector of shoreline points 
+        output_filename = []   # filename of the images from which the shorelines where derived
+        output_cloudcover = [] # cloud cover of the images 
+        output_geoaccuracy = []# georeferencing accuracy of the images
+        output_idxkeep = []    # index that were kept during the analysis (cloudy images are skipped)
+        # sand fields    
+        output_sand_area = []       #area of sandy pixles identified from classification 
+        output_sand_perimeter = []  #perimieter of sandy pixels
+        output_sand_centroid = []   #coordinates center of mass of sandy pixels
+        output_sand_points = []     #coordinates of sandy pixels
+        
+        # load classifiers and convert settings['min_beach_area'] and settings['buffer_size'] 
+        # from metres to pixels
+        if satname in ['L5','L7','L8']:
+            clf = joblib.load(os.path.join(os.getcwd(), 'classifiers', 'NN_4classes_Landsat.pkl'))
+            pixel_size = 15
+        elif satname == 'S2':
+            clf = joblib.load(os.path.join(os.getcwd(), 'classifiers', 'NN_4classes_S2.pkl'))
+            pixel_size = 10
         buffer_size_pixels = np.ceil(settings['buffer_size']/pixel_size)
         min_beach_area_pixels = np.ceil(settings['min_beach_area']/pixel_size**2)
         
         # loop through the images
-        #sand_contours = []
-        for i in range(len(filenames)-340):
-            
+        #for i in range(len(filenames)):
+            i=5
+            print('\r%s:   %d%%' % (satname,int(((i+1)/len(filenames))*100)), end='')
+
             # get image filename
             fn = SDS_tools.get_filenames(filenames[i],filepath, satname)
             # preprocess image (cloud mask + pansharpening/downsampling)
@@ -63,93 +68,145 @@ Created on Wed Apr  3 09:26:17 2019
             
             # classify image in 4 classes (sand, whitewater, water, other) with NN classifier
             im_classif, im_labels = SDS_shoreline.classify_image_NN(im_ms, im_extra, cloud_mask,
-                                    min_beach_area_pixels, satname)
+                                    min_beach_area_pixels, clf)
+            # if the classifier does not detect sand pixels skip this image
+#            if sum(sum(im_labels[:,:,0])) == 0:
+#                continue
+
+            #######################################################################################
+            # SAND POLYGONS (kilian)
+            #######################################################################################
+            #######################################################################################
+
+            # create binary image with True where the sand pixels and non-classified pixels are
+            im_binary_sand = (im_classif == 1)
+            # fill the interior of the ring of sand around the island
+            im_binary_sand_closed = morphology.remove_small_holes(im_binary_sand, area_threshold=3000, connectivity=1)
+            # vectorise the contours
+            sand_contours = measure.find_contours(im_binary_sand_closed, 0.5)
             
-            #calculate sand area, sand perimeter and save
-            im_sand2 = im_classif==1
+            # if several contours, it means there is a gap --> merge sand and other pixels
+            if len(sand_contours) > 1:
+                im_binary_sand = np.logical_or(im_classif == 1, im_classif == 0)
+                im_binary_sand_closed = morphology.remove_small_holes(im_binary_sand, area_threshold=3000, connectivity=1)
+                sand_contours = measure.find_contours(im_binary_sand_closed, 0.5)
+                # if there are still more than one contour, only keep the one with more points
+                if len(sand_contours) > 1:
+                    n_points = []
+                    for j in range(len(sand_contours)):
+                        n_points.append(sand_contours[j].shape[0])
+                    sand_contours = [sand_contours[np.argmax(n_points)]]
+
+            # convert to world coordinates
+            sand_contours_world = SDS_tools.convert_pix2world(sand_contours[0],georef)
+            sand_contours_coords = SDS_tools.convert_epsg(sand_contours_world, image_epsg, settings['output_epsg'])[:,:-1]               
+            # make a shapely polygon
+            linear_ring = LinearRing(coordinates=sand_contours_coords)
+            sand_polygon = Polygon(shell=linear_ring, holes=None)
+            # calculate the attributes
+            sand_area = sand_polygon.area
+            sand_perimeter = sand_polygon.exterior.length
+            sand_centroid = np.array(sand_polygon.centroid.coords)
+            sand_points = np.array(sand_polygon.exterior.coords)
+
+            #######################################################################################
+            ####################################################################################### 
             
-            #vectorize sand pixels
-            
-            rows,cols = im_sand2.shape
-            sand_pix = np.array([[-999,-999]],dtype=float)
-            
-            for ii in range(0,rows-1):    
-                for jj in range(0,cols-1):
-                    if im_sand2[ii,jj]==True:
-                        dum = np.array([[ii,jj]],dtype=float)
-                        sand_pix = np.concatenate((sand_pix,dum),axis=0)
-                        
-            rows,cols = sand_pix.shape           
-            sand_pix = sand_pix[1:rows,:]
-                        
-            sand_area = sum(im_classif[im_sand2])*pixel_size
-            
-            if sand_area>0:         
-                #conver to real world coordinates
-                sand_world = SDS_tools.convert_pix2world(sand_pix,georef)
                
-                #from image_epsg to output_epsg
-                sand_points = SDS_tools.convert_epsg(sand_world, image_epsg, settings['output_epsg'])
-              
-                #calculate centroid coordinates
-                xCenter = np.sum(sand_points[:,0])/len(sand_points[:,0])
-                yCenter = np.sum(sand_points[:,1])/len(sand_points[:,1])
-                sand_centroid = np.array([xCenter,yCenter])
+            # extract water line contours
+            # if there aren't any sandy pixels, use find_wl_contours1 (traditional method), 
+            # otherwise use find_wl_contours2 (enhanced method with classification)
+            try: # use try/except structure for long runs
+                if sum(sum(im_labels[:,:,0])) == 0 :
+                    # compute MNDWI (SWIR-Green normalized index) grayscale image
+                    im_mndwi = nd_index(im_ms[:,:,4], im_ms[:,:,1], cloud_mask)
+                    # find water contourson MNDWI grayscale image
+                    contours_mwi = find_wl_contours1(im_mndwi, cloud_mask)
+                else:
+                    # use classification to refine threshold and extract sand/water interface
+                    is_reference_sl = 'reference_shoreline' in settings.keys()
+                    contours_wi, contours_mwi = find_wl_contours2(im_ms, im_labels, 
+                                                cloud_mask, buffer_size_pixels, is_reference_sl)
+            except:
+                continue
+            
+            # process water contours into shorelines
+            shoreline = process_shoreline(contours_mwi, georef, image_epsg, settings)
+            
+            if settings['check_detection_sand_poly']:
+                date = filenames[i][:18]
+                skip_image = SDS_shoreline.show_detection_sand_poly(im_ms, cloud_mask, im_binary_sand, im_binary_sand_closed, 
+                                                      sand_contours, settings, date, satname)
+                # if user decides to skip the image
+                if skip_image:
+                    continue
                 
-                #calculate inner and outer bounds of sand polygon
-                sand_contours_dum = measure.find_contours(im_sand2, 0.99)
-                min_contour_len = 50
-                sand_contours=[]
-                for D in range(len(sand_contours_dum)):
-                    if len(sand_contours_dum[D])>min_contour_len:
-                        sand_contours.append(sand_contours_dum[D])
-            else:
-                sand_points = np.zeros([])
-                sand_centroid = np.zeros([])
-                sand_contours = np.zeros([])
+            elif settings['check_detection']:
+                date = filenames[i][:18]
+                skip_image = show_detection(im_ms, cloud_mask, im_labels, shoreline,
+                                            image_epsg, georef, settings, date, satname)
+                # if user decides to skip the image
+                if skip_image:
+                    continue
             
-      
-            
-            # fill and save outputput structure
+            # append to output variables
             output_timestamp.append(metadata[satname]['dates'][i])
-            #output_shoreline.append(shoreline)
+            output_shoreline.append(shoreline)
             output_filename.append(filenames[i])
             output_cloudcover.append(cloud_cover)
             output_geoaccuracy.append(metadata[satname]['acc_georef'][i])
             output_idxkeep.append(i)
+            # sand fields
             output_sand_area.append(sand_area)
-            output_sand_contours.append(sand_contours)
-            output_sand_points.append(sand_points)
+            output_sand_perimeter.append(sand_perimeter)
             output_sand_centroid.append(sand_centroid)
+            output_sand_points.append(sand_points)
             
+        # create dictionnary of output
         output[satname] = {
-                'timestamp': output_timestamp,
-                'shoreline': output_shoreline,
+                'dates': output_timestamp,
+                'shorelines': output_shoreline,
                 'filename': output_filename,
-                'cloudcover': output_cloudcover,
+                'cloud_cover': output_cloudcover,
                 'geoaccuracy': output_geoaccuracy,
-                'idxkeep': output_idxkeep,
+                'idx': output_idxkeep,
                 'sand_area': output_sand_area,
-                'sand_contours': output_sand_contours,
+                'sand_perimeter': output_sand_perimeter,
+                'sand_centroid': output_sand_centroid,
                 'sand_points': output_sand_points,
-                'sand_centroid': output_sand_centroid
                 }
-
-    # add some metadata
-    output['meta'] = {
-            'timestamp': 'UTC time',
-            'shoreline': 'coordinate system epsg : ' + str(settings['output_epsg']),
-            'cloudcover': 'calculated on the cropped image',
-            'geoaccuracy': 'RMSE error based on GCPs',
-            'idxkeep': 'indices of the images that were kept to extract a shoreline',
-            'sand_area': 'area of sandy pixels',
-            'sand_contours': 'boundaryes of sandy pixels',
-            'sand_points': 'real world coordinates of sandy pixels',
-            'sand_centroid': 'coordinates for center of mass of sandy pixels'
-            }
-    
     # change the format to have one list sorted by date with all the shorelines (easier to use)
     output = SDS_tools.merge_output(output)
+    
+    # save outputput structure as output.pkl
+    filepath = os.path.join(filepath_data, sitename)
+    with open(os.path.join(filepath, sitename + '_output.pkl'), 'wb') as f:
+        pickle.dump(output, f)
+        
+    # save output as kml for GIS applications
+    kml = simplekml.Kml()
+    for i in range(len(output['shorelines'])):
+        if len(output['shorelines'][i]) == 0:
+            continue
+        sl = output['shorelines'][i]
+        date = output['dates'][i]
+        newline = kml.newlinestring(name= date.strftime('%Y-%m-%d %H:%M:%S'))
+        newline.coords = sl
+        newline.description = satname + ' shoreline' + '\n' + 'acquired at ' + date.strftime('%H:%M:%S') + ' UTC'
+    kml.save(os.path.join(filepath, sitename + '_output.kml'))  
+    
+    # save sand polygons as kml
+    kml = simplekml.Kml()
+    for i in range(len(output['sand_points'])):
+        if len(output['sand_points'][i]) == 0:
+            continue
+        sl = output['sand_points'][i]
+        date = output['dates'][i]
+        newline = kml.newpolygon(name=date.strftime('%Y-%m-%d %H:%M:%S'), outerboundaryis=sl)
+        newline.description = satname + ' shoreline' + '\n' + 'acquired at ' + date.strftime('%H:%M:%S') + ' UTC'
+    kml.save(os.path.join(filepath, sitename + '_sand_polygons.kml')) 
+        
+    return output
 
 #%%
 sand_poly_pix = np.zeros([1,2])

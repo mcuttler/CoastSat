@@ -551,7 +551,7 @@ def show_detection(im_ms, cloud_mask, im_labels, shoreline,image_epsg, georef,
     
     return skip_image
 
-def show_detection_sand_poly(im_ms, cloud_mask, im_bindary_sand, im_bindary_sand_closed, sand_contours,
+def show_detection_sand_poly(im_ms, cloud_mask, im_binary_sand, im_binary_sand_closed, sand_contours,
                    settings, date, satname):
     """
     Shows the detected sand polygons and boundary of this polygon (pseudo shoreline) to the user for visual quality control. The user can select "keep"
