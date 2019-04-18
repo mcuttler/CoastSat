@@ -550,6 +550,125 @@ def show_detection(im_ms, cloud_mask, im_labels, shoreline,image_epsg, georef,
         plt.close()
     
     return skip_image
+
+def show_detection_sand_poly(im_ms, cloud_mask, im_bindary_sand, im_bindary_sand_closed, sand_contours,
+                   settings, date, satname):
+    """
+    Shows the detected sand polygons and boundary of this polygon (pseudo shoreline) to the user for visual quality control. The user can select "keep"
+    if the shoreline detection is correct or "skip" if it is incorrect. 
+    
+    KV WRL 2019
+    MC UWA 2019
+    
+    Arguments:
+    -----------
+        im_ms: np.array
+            RGB + downsampled NIR and SWIR
+        cloud_mask: np.array
+            2D cloud mask with True where cloud pixels are
+        im_labels: np.array
+            3D image containing a boolean image for each class in the order (sand, swash, water)
+        shoreline: np.array 
+            array of points with the X and Y coordinates of the shoreline
+        image_epsg: int
+            spatial reference system of the image from which the contours were extracted
+        georef: np.array
+            vector of 6 elements [Xtr, Xscale, Xshear, Ytr, Yshear, Yscale]
+        settings: dict
+            contains important parameters for processing the shoreline
+        date: string
+            date at which the image was taken
+        satname: string
+            indicates the satname (L5,L7,L8 or S2)
+                       
+    Returns:    -----------
+        skip_image: boolean
+            True if the user wants to skip the image, False otherwise.
+            
+    """  
+    
+    sitename = settings['inputs']['sitename']
+    filepath_data = settings['inputs']['filepath']
+    # subfolder where the .jpg file is stored if the user accepts the shoreline detection 
+    filepath = os.path.join(filepath_data, sitename, 'jpg_files', 'sand_polygons')
+    
+    im_RGB = SDS_preprocess.rescale_image_intensity(im_ms[:,:,[2,1,0]], cloud_mask, 99.9)
+    
+    # according to the image shape, decide whether it is better to have the images in the subplot
+    # in different rows or different columns
+    fig = plt.figure()
+    if im_RGB.shape[1] > 2*im_RGB.shape[0]:
+        # vertical subplots
+        gs = gridspec.GridSpec(3, 1)
+        gs.update(bottom=0.03, top=0.97, left=0.03, right=0.97)
+        ax1 = fig.add_subplot(gs[0,0])
+        ax2 = fig.add_subplot(gs[1,0])
+        ax3 = fig.add_subplot(gs[2,0])
+    else: 
+        # horizontal subplots
+        gs = gridspec.GridSpec(1, 3)
+        gs.update(bottom=0.05, top=0.95, left=0.05, right=0.95)
+        ax1 = fig.add_subplot(gs[0,0])
+        ax2 = fig.add_subplot(gs[0,1])
+        ax3 = fig.add_subplot(gs[0,2])
+                                     
+    # create image 1 (RGB)
+    ax1.imshow(im_RGB)
+    ax1.axis('off')
+    btn_keep = plt.text(0, 0.9, 'keep', size=16, ha="left", va="top",
+                           transform=ax1.transAxes,
+                           bbox=dict(boxstyle="square", ec='k',fc='w'))   
+    btn_skip = plt.text(1, 0.9, 'skip', size=16, ha="right", va="top",
+                           transform=ax1.transAxes,
+                           bbox=dict(boxstyle="square", ec='k',fc='w'))
+    ax1.set_title(sitename + '    ' + date + '     ' + satname, fontweight='bold', fontsize=16)
+
+    # create image 2 (sandy pixels)
+    ax2.imshow(im_binary_sand,cmap='gray')
+    ax2.axis('off')
+    ax2.set_title('sand pixels', fontweight='bold')
+    
+    # create image 3 (closed sand polygon)
+    ax3.imshow(im_binary_sand_closed, cmap='gray')
+    ax3.axis('off')
+    ax3.set_title('sand polygon', fontweight='bold')
+    
+    #plot sand contours on each sub plot
+    for k in range(len(sand_contours)):
+                ax3.plot(sand_contours[k][:,1], sand_contours[k][:,0], 'r-', linewidth=2.5)
+                ax2.plot(sand_contours[k][:,1], sand_contours[k][:,0], 'r-', linewidth=2.5)
+                ax1.plot(sand_contours[k][:,1], sand_contours[k][:,0], 'k--', linewidth=1.5)
+
+    #fig.set_size_inches([19,10])
+    #fig.set_tight_layout(True)
+    
+# additional options
+#    ax1.set_anchor('W')
+#    ax2.set_anchor('W')
+#    cb = plt.colorbar()
+#    cb.ax.tick_params(labelsize=10)
+#    cb.set_label('MNDWI values')
+#    ax3.set_anchor('W')
+    
+    fig.set_size_inches([12.53, 9.3])
+    mng = plt.get_current_fig_manager()                                         
+    mng.window.showMaximized()
+    
+    # wait for user's selection: <keep> or <skip>
+    pt = ginput(n=1, timeout=100000, show_clicks=True)
+    pt = np.array(pt)
+    # if user clicks around the <skip> button, return skip_image = True
+    if pt[0][0] > im_ms.shape[1]/2:
+        skip_image = True
+        plt.close()
+    else:
+        skip_image = False
+        btn_skip.set_visible(False)
+        btn_keep.set_visible(False)
+        fig.savefig(os.path.join(filepath, date + '_' + satname + '.jpg'), dpi=150)
+        plt.close()
+    
+    return skip_image
     
 
 def extract_shorelines(metadata, settings):
@@ -678,31 +797,35 @@ def extract_shorelines(metadata, settings):
                     for j in range(len(sand_contours)):
                         n_points.append(sand_contours[j].shape[0])
                     sand_contours = [sand_contours[np.argmax(n_points)]]
-                    
-            # make a figure for quality control
-            fig = plt.figure()
-            ax0 = fig.add_subplot(131)
-            ax0.axis('off')
-            im_RGB = SDS_preprocess.rescale_image_intensity(im_ms[:,:,[2,1,0]], cloud_mask, 99.9)
-            ax0.imshow(im_RGB)
-            ax0.set_title('RGB', fontweight='bold')
-            ax1 = fig.add_subplot(132, sharex=ax0, sharey=ax0)
-            ax1.axis('off')
-            ax1.imshow(im_binary_sand,cmap='gray')
-            ax1.set_title('sand pixels', fontweight='bold')
-            ax2 = fig.add_subplot(133, sharex=ax0, sharey=ax0)
-            ax2.axis('off')
-            ax2.imshow(im_binary_sand_closed, cmap='gray')
-            ax2.set_title('sand polygon', fontweight='bold')
-            for k in range(len(sand_contours)):
-                ax2.plot(sand_contours[k][:,1], sand_contours[k][:,0], 'r-', linewidth=2.5)
-                ax1.plot(sand_contours[k][:,1], sand_contours[k][:,0], 'r-', linewidth=2.5)
-                ax0.plot(sand_contours[k][:,1], sand_contours[k][:,0], 'k--', linewidth=1.5)
-            fig.set_size_inches([19,10])
-            fig.set_tight_layout(True)
-            fig.savefig(os.path.join(settings['inputs']['filepath'],
-                    sitename, 'jpg_files', 'sand_polygons',
-                    filenames[i][:18] + '_' + satname + '_' + sitename + '.jpg'))
+ 
+#################################################################################
+                    #DELETE THIS SECTION
+#################################################################################                          
+            # make a figure for quality control - moved to show_detection_sand_polygon, to be deleted
+#            fig = plt.figure()
+#            ax0 = fig.add_subplot(131)
+#            ax0.axis('off')
+#            im_RGB = SDS_preprocess.rescale_image_intensity(im_ms[:,:,[2,1,0]], cloud_mask, 99.9)
+#            ax0.imshow(im_RGB)
+#            ax0.set_title('RGB', fontweight='bold')
+#            ax1 = fig.add_subplot(132, sharex=ax0, sharey=ax0)
+#            ax1.axis('off')
+#            ax1.imshow(im_binary_sand,cmap='gray')
+#            ax1.set_title('sand pixels', fontweight='bold')
+#            ax2 = fig.add_subplot(133, sharex=ax0, sharey=ax0)
+#            ax2.axis('off')
+#            ax2.imshow(im_binary_sand_closed, cmap='gray')
+#            ax2.set_title('sand polygon', fontweight='bold')
+#            for k in range(len(sand_contours)):
+#                ax2.plot(sand_contours[k][:,1], sand_contours[k][:,0], 'r-', linewidth=2.5)
+#                ax1.plot(sand_contours[k][:,1], sand_contours[k][:,0], 'r-', linewidth=2.5)
+#                ax0.plot(sand_contours[k][:,1], sand_contours[k][:,0], 'k--', linewidth=1.5)
+#            fig.set_size_inches([19,10])
+#            fig.set_tight_layout(True)
+#            fig.savefig(os.path.join(settings['inputs']['filepath'],
+#                    sitename, 'jpg_files', 'sand_polygons',
+#                    filenames[i][:18] + '_' + satname + '_' + sitename + '.jpg'))
+######################################################################################
             
             # convert to world coordinates
             sand_contours_world = SDS_tools.convert_pix2world(sand_contours[0],georef)
@@ -719,39 +842,7 @@ def extract_shorelines(metadata, settings):
             #######################################################################################
             ####################################################################################### 
             
-#            #calculate sand area, sand perimeter and save - MCuttler (2019)
-#            im_sand2 = im_classif==1
-#            rows,cols = im_sand2.shape
-#            sand_pix = np.array([[-999,-999]],dtype=float)
-#            
-#            for ii in range(0,rows-1):    
-#                for jj in range(0,cols-1):
-#                    if im_sand2[ii,jj]==True:
-#                        dum = np.array([[ii,jj]],dtype=float)
-#                        sand_pix = np.concatenate((sand_pix,dum),axis=0)
-#                        
-#            rows,cols = sand_pix.shape           
-#            sand_pix = sand_pix[1:rows,:]
-#                        
-#            sand_area = sum(im_classif[im_sand2])*pixel_size
-#            if sand_area>0:
-#                #calculate perimeter of sand area by contouring classified image
-#                #sand_per_pix=np.array(measure.find_contours(im_classif,1))
-#                #sand_per_pix = np.reshape(sand_per_pix,(sand_per_pix.shape[1],2))
-#                        
-#                #conver to real world coordinates
-#                sand_points = SDS_tools.convert_pix2world(sand_pix,georef)
-#                #sand_perimeter = SDS_tools.convert_pix2world(sand_per_pix,georef)
-#            
-#                #calculate centroid coordinates
-#                xCenter = np.sum(sand_points[:,0])/len(sand_points[:,0])
-#                yCenter = np.sum(sand_points[:,1])/len(sand_points[:,1])
-#                sand_centroid = np.array([xCenter,yCenter])
-#            else:
-#                sand_points = np.empty([])
-#                #sand_perimeter = np.empty([])
-#                sand_centroid = np.empty([])
-                
+               
             # extract water line contours
             # if there aren't any sandy pixels, use find_wl_contours1 (traditional method), 
             # otherwise use find_wl_contours2 (enhanced method with classification)
@@ -772,7 +863,15 @@ def extract_shorelines(metadata, settings):
             # process water contours into shorelines
             shoreline = process_shoreline(contours_mwi, georef, image_epsg, settings)
             
-            if settings['check_detection']:
+            if settings['check_detection_sand_poly']:
+                date = filenames[i][:18]
+                skip_image = show_detection_sand_poly(im_ms, cloud_mask, im_bindary_sand, im_bindary_sand_closed, 
+                                                      sand_contours, settings, date, satname)
+                # if user decides to skip the image
+                if skip_image:
+                    continue
+                
+            elif settings['check_detection']:
                 date = filenames[i][:18]
                 skip_image = show_detection(im_ms, cloud_mask, im_labels, shoreline,
                                             image_epsg, georef, settings, date, satname)
