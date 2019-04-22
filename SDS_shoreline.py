@@ -785,7 +785,7 @@ def extract_shorelines(metadata, settings):
             # create binary image with True where the sand pixels and non-classified pixels are
             im_binary_sand = (im_classif == 1)
             # fill the interior of the ring of sand around the island
-            im_binary_sand_closed = morphology.remove_small_holes(im_binary_sand, area_threshold=3000, connectivity=1)
+            im_binary_sand_closed = morphology.remove_small_holes(im_binary_sand, area_threshold=5000, connectivity=1)
             # vectorise the contours
             sand_contours = measure.find_contours(im_binary_sand_closed, 0.5)
             
