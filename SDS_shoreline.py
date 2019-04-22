@@ -589,9 +589,12 @@ def show_detection_sand_poly(im_ms, cloud_mask, im_binary_sand, im_binary_sand_c
     
     sitename = settings['inputs']['sitename']
     filepath_data = settings['inputs']['filepath']
-    # subfolder where the .jpg file is stored if the user accepts the shoreline detection 
-    filepath = os.path.join(filepath_data, sitename, 'jpg_files', 'sand_polygons')
     
+    # subfolder where the .jpg file is stored if the user accepts the shoreline detection 
+    filepath_sandpoly = os.path.join(filepath_data, sitename, 'jpg_files', 'sand_polygons')
+    if not os.path.exists(filepath_sandpoly):      
+        os.makedirs(filepath_sandpoly)
+        
     im_RGB = SDS_preprocess.rescale_image_intensity(im_ms[:,:,[2,1,0]], cloud_mask, 99.9)
     
     # according to the image shape, decide whether it is better to have the images in the subplot
@@ -665,7 +668,7 @@ def show_detection_sand_poly(im_ms, cloud_mask, im_binary_sand, im_binary_sand_c
         skip_image = False
         btn_skip.set_visible(False)
         btn_keep.set_visible(False)
-        fig.savefig(os.path.join(filepath, date + '_' + satname + '.jpg'), dpi=150)
+        fig.savefig(os.path.join(filepath_sandpoly, date + '_' + satname + '.jpg'), dpi=150)
         plt.close()
     
     return skip_image
@@ -865,7 +868,7 @@ def extract_shorelines(metadata, settings):
             
             if settings['check_detection_sand_poly']:
                 date = filenames[i][:18]
-                skip_image = show_detection_sand_poly(im_ms, cloud_mask, im_bindary_sand, im_bindary_sand_closed, 
+                skip_image = show_detection_sand_poly(im_ms, cloud_mask, im_binary_sand, im_binary_sand_closed, 
                                                       sand_contours, settings, date, satname)
                 # if user decides to skip the image
                 if skip_image:
