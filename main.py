@@ -115,8 +115,8 @@ plt.ylabel('Northing (m)');
 plt.title('Centroid Movement')
 
 ax2 = fig.add_subplot(gs[1,0])
-#EvaCenter = [234731.70, 7573554.25]
-FlyCenter = [246858.55, 7586598.73]
+EvaCenter = [234731.70, 7573554.25]
+#FlyCenter = [246858.55, 7586598.73]
 centroidX = []
 centroidY = []
 for i,dum in enumerate(output['sand_centroid']):
