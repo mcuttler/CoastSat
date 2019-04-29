@@ -82,7 +82,7 @@ settings = {
 # [OPTIONAL] preprocess images (cloud masking, pansharpening/down-sampling)
 #SDS_preprocess.save_jpg(metadata, settings)
 
-# [OPTIONAL] create a reference shoreline (helps to identify outliers and false detections)
+# [OPTIONAL] create a reference shoreline (helps to identify outliers and false detections); required if using sand_polygon
 settings['reference_shoreline'] = SDS_preprocess.get_reference_sl_manual(metadata, settings)
 # set the max distance (in meters) allowed from the reference shoreline for a detected shoreline to be valid
 settings['max_dist_ref'] = 100        
@@ -90,14 +90,16 @@ settings['max_dist_ref'] = 100
 # extract shorelines from all images (also saves output.pkl and shorelines.kml)
 output = SDS_shoreline.extract_shorelines(metadata, settings)
 
-#%% make figures showing timeseries of beach area and centroid movement
-
+#plot time series of beach area
 fig = plt.figure()
 plt.plot(output['dates'],output['sand_area'],'b-x')
 plt.grid('on')
 plt.xlabel('Date')
 plt.ylabel('Sub-aerial sand area (m^2)')
 fig.set_size_inches([8,  4])
+#%% make figures showing timeseries of beach area and centroid movement
+
+
 
 #plot centroid data
 
@@ -212,7 +214,7 @@ gs.update(left=0.05, right=0.95, bottom=0.05, top=0.95, hspace=0.05)
 for i,key in enumerate(cross_distance.keys()):
     ax = fig.add_subplot(gs[i,0])
     ax.grid(linestyle=':', color='0.5')
-    ax.set_ylim([-50,50])
+    ax.set_ylim([-400,400])
     if not i == len(cross_distance.keys()):
         ax.set_xticks = []
     ax.plot(output['dates'], cross_distance[key]- np.nanmedian(cross_distance[key]), '-^', markersize=6)
