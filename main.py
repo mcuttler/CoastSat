@@ -107,8 +107,8 @@ fig = plt.figure()
 gs = gridspec.GridSpec(2,1)
 #gs.update(left=0.05, right=0.95, bottom=0.05, top=0.95, hspace=0.05)
 ax1 = fig.add_subplot(gs[0,0])
-for i, coords in enumerate(output['sand_centroid']):
-    plt.plot(coords[0],coords[1],'b.')
+for i, coords in enumerate(output['sand_centroid']): 
+    plt.plot(coords[0][0],coords[0][1],'b.')
 plt.grid('on')
 plt.xlabel('Easting (m)');
 plt.ylabel('Northing (m)');
@@ -120,8 +120,8 @@ EvaCenter = [234731.70, 7573554.25]
 centroidX = []
 centroidY = []
 for i,dum in enumerate(output['sand_centroid']):
-    centroidX.append([dum[0]-FlyCenter[0]])
-    centroidY.append([dum[1]-FlyCenter[1]])
+    centroidX.append([dum[0][0]-EvaCenter[0]])
+    centroidY.append([dum[0][1]-EvaCenter[1]])
 centroidX = np.array(centroidX)
 centroidY = np.array(centroidY)
 #plot change in East/West coordinate of centroid (compared to island center)
