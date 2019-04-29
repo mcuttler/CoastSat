@@ -800,6 +800,21 @@ def extract_shorelines(metadata, settings):
                     for j in range(len(sand_contours)):
                         n_points.append(sand_contours[j].shape[0])
                     sand_contours = [sand_contours[np.argmax(n_points)]]
+                    
+                    # convert to world coordinates
+                    sand_contours_world = SDS_tools.convert_pix2world(sand_contours[0],georef)
+                    sand_contours_coords = SDS_tools.convert_epsg(sand_contours_world, image_epsg, settings['output_epsg'])[:,:-1]               
+                    # make a shapely polygon
+                    linear_ring = LinearRing(coordinates=sand_contours_coords)
+                    sand_polygon = Polygon(shell=linear_ring, holes=None)
+                else:    
+                    # convert to world coordinates
+                    sand_contours_world = SDS_tools.convert_pix2world(sand_contours[0],georef)
+                    sand_contours_coords = SDS_tools.convert_epsg(sand_contours_world, image_epsg, settings['output_epsg'])[:,:-1]               
+                    # make a shapely polygon
+                    linear_ring = LinearRing(coordinates=sand_contours_coords)
+                    sand_polygon = Polygon(shell=linear_ring, holes=None)
+                                      
             else:    
                 # convert to world coordinates
                 sand_contours_world = SDS_tools.convert_pix2world(sand_contours[0],georef)
