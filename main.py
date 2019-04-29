@@ -16,16 +16,16 @@ import matplotlib.pyplot as plt
 import SDS_download, SDS_preprocess, SDS_tools, SDS_transects, SDS_shoreline
 
 # region of interest (longitude, latitude in WGS84), can be loaded from a .kml polygon
-polygon = SDS_tools.coords_from_kml('PORT_HEDLAND.kml')
+polygon = SDS_tools.coords_from_kml('EVA.kml')
             
 # date range
-dates = ['1985-01-01', '2019-05-01']
+dates = ['2013-01-01', '2019-05-01']
 
 # satellite missions
-sat_list = ['L5','L7','L8','S2']
+sat_list = ['L8','S2']
 
 # name of the site
-sitename = 'PORT_HEDLAND'
+sitename = 'EVA'
 
 # filepath where data will be stored
 filepath_data = os.path.join(os.getcwd(), 'data')
@@ -42,12 +42,12 @@ inputs = {
 #%% 2. Retrieve images
 
 # retrieve satellite images from GEE
-metadata = SDS_download.retrieve_images(inputs)
+#metadata = SDS_download.retrieve_images(inputs)
 
 # if you have already downloaded the images, just load the metadata file
-#filepath = os.path.join(inputs['filepath'], sitename)
-#with open(os.path.join(filepath, sitename + '_metadata' + '.pkl'), 'rb') as f:
-#    metadata = pickle.load(f)
+filepath = os.path.join(inputs['filepath'], sitename)
+with open(os.path.join(filepath, sitename + '_metadata' + '.pkl'), 'rb') as f:
+    metadata = pickle.load(f)
 
 ##################################################################################################
 # create a subset of the metadata for testing
@@ -80,7 +80,7 @@ settings = {
 }
 
 # [OPTIONAL] preprocess images (cloud masking, pansharpening/down-sampling)
-SDS_preprocess.save_jpg(metadata, settings)
+#SDS_preprocess.save_jpg(metadata, settings)
 
 # [OPTIONAL] create a reference shoreline (helps to identify outliers and false detections)
 settings['reference_shoreline'] = SDS_preprocess.get_reference_sl_manual(metadata, settings)
@@ -115,8 +115,8 @@ plt.ylabel('Northing (m)');
 plt.title('Centroid Movement')
 
 ax2 = fig.add_subplot(gs[1,0])
-#EvaCenter = [234731.70, 7573554.25]
-FlyCenter = [246858.55, 7586598.73]
+EvaCenter = [234731.70, 7573554.25]
+#FlyCenter = [246858.55, 7586598.73]
 centroidX = []
 centroidY = []
 for i,dum in enumerate(output['sand_centroid']):
