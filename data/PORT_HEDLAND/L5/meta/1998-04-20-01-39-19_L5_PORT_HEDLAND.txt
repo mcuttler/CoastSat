@@ -1,0 +1,3 @@
+filename	1998-04-20-01-39-19_L5_PORT_HEDLAND
+acc_georef	6.106
+epsg	32650

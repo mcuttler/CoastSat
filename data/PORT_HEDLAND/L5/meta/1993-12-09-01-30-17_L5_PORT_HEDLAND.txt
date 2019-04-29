@@ -1,0 +1,3 @@
+filename	1993-12-09-01-30-17_L5_PORT_HEDLAND
+acc_georef	5.58
+epsg	32650

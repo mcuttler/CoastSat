@@ -1,0 +1,3 @@
+filename	2008-08-21-01-48-03_L5_PORT_HEDLAND
+acc_georef	4.904
+epsg	32650
