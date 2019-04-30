@@ -436,13 +436,12 @@ def tide_correct(cross_distance, tide, zref, beta):
     if len(cross_distance['1'])==len(tide['ztide_image']):
         #Cyclone through all transects
         for key,transect in cross_distance.items():
-            transect_corrected = []   
-            
+            transect_corrected = []               
             for i,ztide in enumerate(tide['ztide_image']):
-                delX = (zref-ztide)/beta
-                transect_corrected.append(transect[i]+delX)
+               delX = (zref-ztide)/beta             
+               transect_corrected.append(transect[i]+delX)
                 
-            transect_corrected = numpy.ndarray(len(transect_corrected))
+            transect_corrected = np.array(transect_corrected)
             cross_distance_corrected[key] = transect_corrected        
     else:
         print('ERROR - time series not same lenght!')

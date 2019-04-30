@@ -52,7 +52,7 @@ for i, date in enumerate(image_dates):
 
 tide_out = dict([])
 tide_out['time_image'] = tide['time'][ind_min]
-tide_out['ztide_image']=tide['ztide'][ind_min]
+tide_out['ztide_image']=tide['ztide'][ind_min] - 1.412
 
 time_image_UTC = []
 for i,time in enumerate(tide_out['time_image']):
@@ -64,4 +64,21 @@ filepath = 'P:\CUTTLER_CoastSat\CoastSat\data'
 with open(os.path.join(filepath, 'ExTide.pkl'), 'wb') as f:
         pickle.dump(tide_out, f) 
 
+#%%
+    cross_distance_corrected = dict([])
+    #Check that length of tide time series is same as SDS timeseries
+    #Cross distance should have at least 1 transect
+    if len(cross_distance['1'])==len(tide['ztide_image']):
+        #Cyclone through all transects
+        for key,transect in cross_distance.items():
+            transect_corrected = []   
+          
+            for i,ztide in enumerate(tide['ztide_image']):
+                delX = (zref-ztide)/beta             
+                transect_corrected.append(transect[i]+delX)
+                
+            transect_corrected = np.array(transect_corrected)
+            cross_distance_corrected[key] = transect_corrected        
+    else:
+        print('ERROR - time series not same lenght!')
 

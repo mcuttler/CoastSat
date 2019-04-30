@@ -76,7 +76,9 @@ settings = {
     'min_beach_area': 50,     # minimum area (in metres^2) for an object to be labelled as a beach
     'buffer_size': 100,         # radius (in metres) of the buffer around sandy pixels considered in the shoreline detection
     'min_length_sl': 500,       # minimum length (in metres) of shoreline perimeter to be valid
-    'cloud_mask_issue': False,  # switch this parameter to True if sand pixels are masked (in black) on many images  
+    'cloud_mask_issue': False,  # switch this parameter to True if sand pixels are masked (in black) on many images
+    'beach_slope': 0.1, #beach slope for use in tide correction
+    'zref': 0.5   #reference height datum for tidal correction 
 }
 
 # [OPTIONAL] preprocess images (cloud masking, pansharpening/down-sampling)
@@ -100,72 +102,72 @@ settings = {
 #%% make figures showing timeseries of beach area and centroid movement
 #plot centroid data
 
-from matplotlib import gridspec
-import numpy as np
-fig = plt.figure()
-gs = gridspec.GridSpec(2,1)
-#gs.update(left=0.05, right=0.95, bottom=0.05, top=0.95, hspace=0.05)
-ax1 = fig.add_subplot(gs[0,0])
-for i, coords in enumerate(output['sand_centroid']): 
-    plt.plot(coords[0][0],coords[0][1],'b.')
-plt.grid('on')
-plt.xlabel('Easting (m)');
-plt.ylabel('Northing (m)');
-plt.title('Centroid Movement')
-
-ax2 = fig.add_subplot(gs[1,0])
-EvaCenter = [234731.70, 7573554.25]
-#FlyCenter = [246858.55, 7586598.73]
-centroidX = []
-centroidY = []
-for i,dum in enumerate(output['sand_centroid']):
-    centroidX.append([dum[0][0]-EvaCenter[0]])
-    centroidY.append([dum[0][1]-EvaCenter[1]])
-centroidX = np.array(centroidX)
-centroidY = np.array(centroidY)
-#plot change in East/West coordinate of centroid (compared to island center)
-plt.plot(output['dates'],centroidX,'b-',label='East-West movement')
-
-#plot change in North/South coordinate of centroid (compared to island center)
-plt.plot(output['dates'],centroidY,'r-',label='North-South movement')
-plt.grid('on')
-plt.legend()
-plt.xlabel('Date')
-plt.ylabel('Change in centroid coordinate (m)')
-
-fig.set_size_inches([8,  6])
-l,b,w,h = ax1.get_position().bounds
-ax1.set_position([l,b+0.05,w,h])
+#from matplotlib import gridspec
+#import numpy as np
+#fig = plt.figure()
+#gs = gridspec.GridSpec(2,1)
+##gs.update(left=0.05, right=0.95, bottom=0.05, top=0.95, hspace=0.05)
+#ax1 = fig.add_subplot(gs[0,0])
+#for i, coords in enumerate(output['sand_centroid']): 
+#    plt.plot(coords[0][0],coords[0][1],'b.')
+#plt.grid('on')
+#plt.xlabel('Easting (m)');
+#plt.ylabel('Northing (m)');
+#plt.title('Centroid Movement')
+#
+#ax2 = fig.add_subplot(gs[1,0])
+#EvaCenter = [234731.70, 7573554.25]
+##FlyCenter = [246858.55, 7586598.73]
+#centroidX = []
+#centroidY = []
+#for i,dum in enumerate(output['sand_centroid']):
+#    centroidX.append([dum[0][0]-EvaCenter[0]])
+#    centroidY.append([dum[0][1]-EvaCenter[1]])
+#centroidX = np.array(centroidX)
+#centroidY = np.array(centroidY)
+##plot change in East/West coordinate of centroid (compared to island center)
+#plt.plot(output['dates'],centroidX,'b-',label='East-West movement')
+#
+##plot change in North/South coordinate of centroid (compared to island center)
+#plt.plot(output['dates'],centroidY,'r-',label='North-South movement')
+#plt.grid('on')
+#plt.legend()
+#plt.xlabel('Date')
+#plt.ylabel('Change in centroid coordinate (m)')
+#
+#fig.set_size_inches([8,  6])
+#l,b,w,h = ax1.get_position().bounds
+#ax1.set_position([l,b+0.05,w,h])
 
 #%% make a figure of the time coverage
-from matplotlib import gridspec
-from matplotlib import patches as mpatches
-fig = plt.figure()
-ax1 = fig.add_subplot(111)
-ax1.yaxis.grid(linestyle=':', color='0.5')
-ax1.set_ylabel('# images')
-years = np.arange(output['dates'][0].year, output['dates'][-1].year+1)
-im_counts = dict([])
-total_sum = 0
-for year in years:
-    im_counts[str(year)] = dict([])
-    for satname in np.unique(output['satname']):
-        idx_year = [_.year == year for _ in output['dates']]
-        idx_satname = [_ == satname for _ in output['satname']]
-        idx = np.logical_and(idx_year, idx_satname)
-        im_counts[str(year)][satname] = sum(idx)
-        total_sum = total_sum + sum(idx)
-        if satname == 'L8': 
-            barcolor = 'C0'
-            ax1.bar(year, height=sum(idx), color=barcolor)                     
-        elif satname == 'S2': 
-            barcolor = 'C1'
-            ax1.bar(year, height=sum(idx), color=barcolor, bottom=im_counts[str(year)]['L8'])                                     
-blue = mpatches.Patch(color='C0', label='L8')
-orange = mpatches.Patch(color='C1', label='S2')
-ax1.legend(handles=[blue, orange], loc=2) 
-average = total_sum/len(years)
-plt.title('%d images, %.2f images / year' % (len(output['dates']), average))
+#from matplotlib import gridspec
+#from matplotlib import patches as mpatches
+#fig = plt.figure()
+#ax1 = fig.add_subplot(111)
+#ax1.yaxis.grid(linestyle=':', color='0.5')
+#ax1.set_ylabel('# images')
+#years = np.arange(output['dates'][0].year, output['dates'][-1].year+1)
+#im_counts = dict([])
+#total_sum = 0
+#for year in years:
+#    im_counts[str(year)] = dict([])
+#    for satname in np.unique(output['satname']):
+#        idx_year = [_.year == year for _ in output['dates']]
+#        idx_satname = [_ == satname for _ in output['satname']]
+#        idx = np.logical_and(idx_year, idx_satname)
+#        im_counts[str(year)][satname] = sum(idx)
+#        total_sum = total_sum + sum(idx)
+#        if satname == 'L8': 
+#            barcolor = 'C0'
+#            ax1.bar(year, height=sum(idx), color=barcolor)                     
+#        elif satname == 'S2': 
+#            barcolor = 'C1'
+#            ax1.bar(year, height=sum(idx), color=barcolor, bottom=im_counts[str(year)]['L8'])                                     
+#blue = mpatches.Patch(color='C0', label='L8')
+#orange = mpatches.Patch(color='C1', label='S2')
+#ax1.legend(handles=[blue, orange], loc=2) 
+#average = total_sum/len(years)
+#plt.title('%d images, %.2f images / year' % (len(output['dates']), average))
 
 
 
@@ -185,9 +187,10 @@ settings['transect_length'] = 250
 # - option 1: draw the shore-normal transects along the beach
 # - option 2: load the transect coordinates from a .kml file
 # - option 3: create the transects manually by providing the coordinates
+# - option 4: load transects from pre-made pickle file
 
 # option 1: draw origin of transect first and then a second point to define the orientation
-transects = SDS_transects.draw_transects(output, settings)
+#transects = SDS_transects.draw_transects(output, settings)
     
 # option 2: load the transects from a KML file
 #kml_file = 'NARRA_transects.kml'
@@ -198,29 +201,36 @@ transects = SDS_transects.draw_transects(output, settings)
 #transects['Transect 1'] = np.array([[342836, 6269215], [343315, 6269071]])
 #transects['Transect 2'] = np.array([[342482, 6268466], [342958, 6268310]])
 #transects['Transect 3'] = np.array([[342185, 6267650], [342685, 6267641]])
-   
+
+# option 4: load transects from pre-made pickle file
+filepath = os.path.join(inputs['filepath'], sitename)
+with open(os.path.join(filepath, sitename + '_transects' + '.pkl'), 'rb') as f:
+    transects = pickle.load(f)
+    
 # intersect the transects with the 2D shorelines to obtain time-series of cross-shore distance
 settings['along_dist'] = 25
 cross_distance = SDS_transects.compute_intersection(output, transects, settings) 
 
+ 
+    
 # plot the time-series
-from matplotlib import gridspec
-fig = plt.figure()
-gs = gridspec.GridSpec(len(cross_distance),1)
-gs.update(left=0.05, right=0.95, bottom=0.05, top=0.95, hspace=0.05)
-for i,key in enumerate(cross_distance.keys()):
-    ax = fig.add_subplot(gs[i,0])
-    ax.grid(linestyle=':', color='0.5')
-    ax.set_ylim([-400,400])
-    if not i == len(cross_distance.keys()):
-        ax.set_xticks = []
-    ax.plot(output['dates'], cross_distance[key]- np.nanmedian(cross_distance[key]), '-^', markersize=6)
-    ax.set_ylabel('distance [m]', fontsize=12)
-    ax.text(0.5,0.95,'Transect ' + key, bbox=dict(boxstyle="square", ec='k',fc='w'), ha='center',
-            va='top', transform=ax.transAxes, fontsize=14)
-mng = plt.get_current_fig_manager()                                         
-mng.window.showMaximized()    
-fig.set_size_inches([15.76,  8.52])
+#from matplotlib import gridspec
+#fig = plt.figure()
+#gs = gridspec.GridSpec(len(cross_distance),1)
+#gs.update(left=0.05, right=0.95, bottom=0.05, top=0.95, hspace=0.05)
+#for i,key in enumerate(cross_distance.keys()):
+#    ax = fig.add_subplot(gs[i,0])
+#    ax.grid(linestyle=':', color='0.5')
+#    ax.set_ylim([-400,400])
+#    if not i == len(cross_distance.keys()):
+#        ax.set_xticks = []
+#    ax.plot(output['dates'], cross_distance[key]- np.nanmedian(cross_distance[key]), '-^', markersize=6)
+#    ax.set_ylabel('distance [m]', fontsize=12)
+#    ax.text(0.5,0.95,'Transect ' + key, bbox=dict(boxstyle="square", ec='k',fc='w'), ha='center',
+#            va='top', transform=ax.transAxes, fontsize=14)
+#mng = plt.get_current_fig_manager()                                         
+#mng.window.showMaximized()    
+#fig.set_size_inches([15.76,  8.52])
 
 #%% 5. tide correction
 # if you have already mapped the shorelines, load the output.pkl file
@@ -232,4 +242,4 @@ with open(os.path.join(filepath, 'ExTide.pkl'),'rb') as f:
     tide = pickle.load(f) 
 
 #add zref and slope to settings above at some point
-cross_distance_corrected = SDS_tools.tide_correct(cross_distance,tide,0,0.1)
+cross_distance_corrected = SDS_tools.tide_correct(cross_distance,tide,settings['zref'],settings['beach_slope'])
