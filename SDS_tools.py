@@ -405,3 +405,30 @@ def merge_output(output):
         output_all[key] = [output_all[key][i] for i in idx_sorted]
 
     return output_all
+
+def tide_correct(cross_distance, tide, zref, beta):
+    """
+    Function for tide-correcting shoreline position time series returned by SDS_transects.compute_intersection
+    
+    Arguments:
+    -----------
+        cross_distance: dict
+            contains the intersection points of satellite-derived shorelines and user-defined transects
+        
+        tide: dict
+            contains the time (UTC) and height of tide measurements 
+        
+        zref: int
+            reference level of height datum - e.g. 0 m AHD
+        
+        beta: int
+            beach slope
+    
+    Returns:
+    ----------
+        cross_distance_tide_corrected: dict
+            contains the tide corrected shoreline-transect intersections
+    """
+    
+    #Exclude tide time points outside of shoreline time series
+    
