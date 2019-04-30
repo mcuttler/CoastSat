@@ -361,3 +361,5 @@ tide_out['time_image_UTC']=time_image_UTC
 filepath = 'P:\CUTTLER_CoastSat\CoastSat\data'
 with open(os.path.join(filepath, 'ExTide.pkl'), 'wb') as f:
         pickle.dump(tide_out, f) 
+
+

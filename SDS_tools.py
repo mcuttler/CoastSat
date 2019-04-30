@@ -8,6 +8,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import pdb
+import math
 
 # other modules
 from osgeo import gdal, ogr, osr
@@ -429,6 +430,43 @@ def tide_correct(cross_distance, tide, zref, beta):
         cross_distance_tide_corrected: dict
             contains the tide corrected shoreline-transect intersections
     """
+    cross_distance_corrected = dict([])
+    #Check that length of tide time series is same as SDS timeseries
+    #Cross distance should have at least 1 transect
+    if len(cross_distance['1'])==len(tide['ztide_image']):
+        #Cyclone through all transects
+        for key,transect in cross_distance.items():
+            transect_corrected = []   
+            
+            for i,ztide in enumerate(tide['ztide_image']):
+                delX = (zref-ztide)/beta
+                transect_corrected.append(transect[i]+delX)
+                
+            transect_corrected = numpy.ndarray(len(transect_corrected))
+            cross_distance_corrected[key] = transect_corrected        
+    else:
+        print('ERROR - time series not same lenght!')
+
+    return cross_distance_corrected
+
+        
     
-    #Exclude tide time points outside of shoreline time series
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     

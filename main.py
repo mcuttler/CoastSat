@@ -83,24 +83,21 @@ settings = {
 #SDS_preprocess.save_jpg(metadata, settings)
 
 # [OPTIONAL] create a reference shoreline (helps to identify outliers and false detections); required if using sand_polygon
-settings['reference_shoreline'] = SDS_preprocess.get_reference_sl_manual(metadata, settings)
+#settings['reference_shoreline'] = SDS_preprocess.get_reference_sl_manual(metadata, settings)
 # set the max distance (in meters) allowed from the reference shoreline for a detected shoreline to be valid
-settings['max_dist_ref'] = 100        
+#settings['max_dist_ref'] = 100        
 
 # extract shorelines from all images (also saves output.pkl and shorelines.kml)
-output = SDS_shoreline.extract_shorelines(metadata, settings)
+#output = SDS_shoreline.extract_shorelines(metadata, settings)
 
 #plot time series of beach area
-fig = plt.figure()
-plt.plot(output['dates'],output['sand_area'],'b-x')
-plt.grid('on')
-plt.xlabel('Date')
-plt.ylabel('Sub-aerial sand area (m^2)')
-fig.set_size_inches([8,  4])
+#fig = plt.figure()
+#plt.plot(output['dates'],output['sand_area'],'b-x')
+#plt.grid('on')
+#plt.xlabel('Date')
+#plt.ylabel('Sub-aerial sand area (m^2)')
+#fig.set_size_inches([8,  4])
 #%% make figures showing timeseries of beach area and centroid movement
-
-
-
 #plot centroid data
 
 from matplotlib import gridspec
@@ -182,7 +179,7 @@ with open(os.path.join(filepath, sitename + '_output' + '.pkl'), 'rb') as f:
 # now we have to define cross-shore transects over which to quantify the shoreline changes
 # each transect is defined by two points, its origin and a second point that defines its orientation
 # the parameter transect length determines how far from the origin the transect will span
-settings['transect_length'] = 500 
+settings['transect_length'] = 250 
 
 # there are 3 options to create the transects:
 # - option 1: draw the shore-normal transects along the beach
@@ -224,3 +221,15 @@ for i,key in enumerate(cross_distance.keys()):
 mng = plt.get_current_fig_manager()                                         
 mng.window.showMaximized()    
 fig.set_size_inches([15.76,  8.52])
+
+#%% 5. tide correction
+# if you have already mapped the shorelines, load the output.pkl file
+#filepath = os.path.join(inputs['filepath'], sitename)
+#with open(os.path.join(filepath, sitename + '_output' + '.pkl'), 'rb') as f:
+
+filepath = 'P:\CUTTLER_CoastSat\CoastSat\data'
+with open(os.path.join(filepath, 'ExTide.pkl'),'rb') as f:
+    tide = pickle.load(f) 
+
+#add zref and slope to settings above at some point
+cross_distance_corrected = SDS_tools.tide_correct(cross_distance,tide,0,0.1)
