@@ -190,7 +190,7 @@ settings['transect_length'] = 250
 # - option 4: load transects from pre-made pickle file
 
 # option 1: draw origin of transect first and then a second point to define the orientation
-#transects = SDS_transects.draw_transects(output, settings)
+transects = SDS_transects.draw_transects(output, settings)
     
 # option 2: load the transects from a KML file
 #kml_file = 'NARRA_transects.kml'
@@ -203,9 +203,9 @@ settings['transect_length'] = 250
 #transects['Transect 3'] = np.array([[342185, 6267650], [342685, 6267641]])
 
 # option 4: load transects from pre-made pickle file
-filepath = os.path.join(inputs['filepath'], sitename)
-with open(os.path.join(filepath, sitename + '_transects' + '.pkl'), 'rb') as f:
-    transects = pickle.load(f)
+#filepath = os.path.join(inputs['filepath'], sitename)
+#with open(os.path.join(filepath, sitename + '_transects' + '.pkl'), 'rb') as f:
+#    transects = pickle.load(f)
     
 # intersect the transects with the 2D shorelines to obtain time-series of cross-shore distance
 settings['along_dist'] = 10

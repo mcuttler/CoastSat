@@ -117,3 +117,101 @@ with open(os.path.join(filepath, 'ExTide.pkl'), 'wb') as f:
             plt.plot(transect[:,0],transect[:,1],'b-')
         
         plt.grid()
+    
+    #%%
+    
+from matplotlib import gridspec
+fig = plt.figure()
+gs = gridspec.GridSpec(len(cross_distance),1)
+gs.update(left=0.05, right=0.95, bottom=0.05, top=0.95, hspace=0.05)
+for i,key in enumerate(cross_distance.keys()):
+    ax = fig.add_subplot(gs[i,0])
+    ax.grid(linestyle=':', color='0.5')
+    ax.set_ylim([-400,400])
+    if not i == len(cross_distance.keys()):
+        ax.set_xticks = []
+    ax.plot(output['dates'], cross_distance[key], '-^', markersize=6)
+    ax.set_ylabel('distance [m]', fontsize=12)
+    ax.text(0.5,0.95,'Transect ' + key, bbox=dict(boxstyle="square", ec='k',fc='w'), ha='center',
+            va='top', transform=ax.transAxes, fontsize=14)
+mng = plt.get_current_fig_manager()                                         
+mng.window.showMaximized()    
+fig.set_size_inches([15.76,  8.52])
+
+#%% Transect calculation
+
+    if settings['check_detection_sand_poly']:
+        shorelines = output['sand_points']
+    else:
+        shorelines = output['shorelines']
+    
+    along_dist = settings['along_dist']
+    
+    # initialise variables
+    chainage_mtx = np.zeros((len(shorelines),len(transects),6))
+    idx_points = []
+    
+    #for i in range(len(shorelines)):
+
+        sl = shorelines[i]
+        idx_points_all = []
+        
+        for j,key in enumerate(list(transects.keys())): 
+            
+            # compute rotation matrix
+            X0 = transects[key][0,0]
+            Y0 = transects[key][0,1]
+            temp = np.array(transects[key][-1,:]) - np.array(transects[key][0,:])
+            phi = np.arctan2(temp[1], temp[0])
+            Mrot = np.array([[np.cos(phi), np.sin(phi)],[-np.sin(phi), np.cos(phi)]])
+    
+            # calculate point to line distance between shoreline points and the transect
+            p1 = np.array([X0,Y0])
+            p2 = transects[key][-1,:]
+            d_line = np.abs(np.cross(p2-p1,sl-p1)/np.linalg.norm(p2-p1))
+            # calculate the distance between shoreline points and the origin of the transect
+            d_origin = np.array([np.linalg.norm(sl[k,:] - p1) for k in range(len(sl))])
+            # find the shoreline points that are close to the transects and to the origin
+            # the distance to the origin is hard-coded here to 1 km 
+            logic_close = np.logical_and(d_line <= along_dist, d_origin <= 1000)
+            idx_close = SDS_transects.find_indices(logic_close, lambda e: e == True)
+            idx_points_all.append(idx_close)
+            
+            # in case there are no shoreline points close to the transect 
+            if not idx_close:
+                chainage_mtx[i,j,:] = np.tile(np.nan,(1,6))
+            else:
+                # change of base to shore-normal coordinate system
+                xy_close = np.array([sl[idx_close,0],sl[idx_close,1]]) - np.tile(np.array([[X0],
+                                   [Y0]]), (1,len(sl[idx_close])))
+                xy_rot = np.matmul(Mrot, xy_close)
+                    
+                # compute mean, median, max, min and std of chainage position
+                n_points = len(xy_rot[0,:])
+                mean_cross = np.nanmean(xy_rot[0,:])
+                median_cross = np.nanmedian(xy_rot[0,:])
+                max_cross = np.nanmax(xy_rot[0,:])
+                min_cross = np.nanmin(xy_rot[0,:])
+                std_cross = np.nanstd(xy_rot[0,:])
+                # store all statistics
+                chainage_mtx[i,j,:] = np.array([mean_cross, median_cross, max_cross,
+                            min_cross, n_points, std_cross])
+    
+        # store the indices of the shoreline points that were used
+        idx_points.append(idx_points_all)
+     
+    # format into dictionnary
+    chainage = dict([])
+    chainage['mean'] = chainage_mtx[:,:,0]
+    chainage['median'] = chainage_mtx[:,:,1]
+    chainage['max'] = chainage_mtx[:,:,2]
+    chainage['min'] = chainage_mtx[:,:,3]
+    chainage['npoints'] = chainage_mtx[:,:,4]
+    chainage['std'] = chainage_mtx[:,:,5]
+    chainage['idx_points'] = idx_points
+        
+    # only return the median
+    cross_dist = dict([])
+    for j,key in enumerate(list(transects.keys())): 
+        cross_dist[key] = chainage['median'][:,j]    
+        
