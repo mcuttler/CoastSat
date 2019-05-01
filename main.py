@@ -220,7 +220,7 @@ gs.update(left=0.05, right=0.95, bottom=0.05, top=0.95, hspace=0.05)
 for i,key in enumerate(cross_distance.keys()):
     ax = fig.add_subplot(gs[i,0])
     ax.grid(linestyle=':', color='0.5')
-    ax.set_ylim([-400,400])
+    ax.set_ylim([-75,75])
     if not i == len(cross_distance.keys()):
         ax.set_xticks = []
     ax.plot(output['dates'], cross_distance[key]- np.nanmedian(cross_distance[key]), '-^', markersize=6)
@@ -255,23 +255,17 @@ gs.update(left=0.05, right=0.95, bottom=0.05, top=0.95, hspace=0.05)
 for i,key in enumerate(cross_distance_corrected.keys()):
     ax = fig.add_subplot(gs[i,0])
     ax.grid(linestyle=':', color='0.5')
-    ax.set_ylim([-400,400])
+    ax.set_ylim([0,150])
     if not i == len(cross_distance_corrected.keys()):
         ax.set_xticks = []
-    ax.plot(output['dates'], cross_distance_corrected[key]- np.nanmedian(cross_distance_corrected[key]), '-^', markersize=6)
+    ax.plot(output['dates'], cross_distance_corrected[key], 'r-', markersize=6)
+    ax.plot(output['dates'], cross_distance[key],'b-')
     ax.set_ylabel('distance [m]', fontsize=12)
     ax.text(0.5,0.95,'Transect ' + key, bbox=dict(boxstyle="square", ec='k',fc='w'), ha='center',
             va='top', transform=ax.transAxes, fontsize=14)
 mng = plt.get_current_fig_manager()                                         
 mng.window.showMaximized()    
 fig.set_size_inches([15.76,  8.52])
-
-
-
-
-
-
-
 
 
 
