@@ -84,12 +84,12 @@ settings = {
 # [OPTIONAL] preprocess images (cloud masking, pansharpening/down-sampling)
 #SDS_preprocess.save_jpg(metadata, settings)
 
-# [OPTIONAL] create a reference shoreline (helps to identify outliers and false detections); required if using sand_polygon
+## [OPTIONAL] create a reference shoreline (helps to identify outliers and false detections); required if using sand_polygon
 #settings['reference_shoreline'] = SDS_preprocess.get_reference_sl_manual(metadata, settings)
-# set the max distance (in meters) allowed from the reference shoreline for a detected shoreline to be valid
+### set the max distance (in meters) allowed from the reference shoreline for a detected shoreline to be valid
 #settings['max_dist_ref'] = 100        
-
-# extract shorelines from all images (also saves output.pkl and shorelines.kml)
+##
+### extract shorelines from all images (also saves output.pkl and shorelines.kml)
 #output = SDS_shoreline.extract_shorelines(metadata, settings)
 
 #plot time series of beach area
@@ -208,38 +208,95 @@ with open(os.path.join(filepath, sitename + '_transects' + '.pkl'), 'rb') as f:
     transects = pickle.load(f)
     
 # intersect the transects with the 2D shorelines to obtain time-series of cross-shore distance
-settings['along_dist'] = 25
+settings['along_dist'] = 10
 cross_distance = SDS_transects.compute_intersection(output, transects, settings) 
 
- 
-    
+   
 # plot the time-series
-#from matplotlib import gridspec
-#fig = plt.figure()
-#gs = gridspec.GridSpec(len(cross_distance),1)
-#gs.update(left=0.05, right=0.95, bottom=0.05, top=0.95, hspace=0.05)
-#for i,key in enumerate(cross_distance.keys()):
-#    ax = fig.add_subplot(gs[i,0])
-#    ax.grid(linestyle=':', color='0.5')
-#    ax.set_ylim([-400,400])
-#    if not i == len(cross_distance.keys()):
-#        ax.set_xticks = []
-#    ax.plot(output['dates'], cross_distance[key]- np.nanmedian(cross_distance[key]), '-^', markersize=6)
-#    ax.set_ylabel('distance [m]', fontsize=12)
-#    ax.text(0.5,0.95,'Transect ' + key, bbox=dict(boxstyle="square", ec='k',fc='w'), ha='center',
-#            va='top', transform=ax.transAxes, fontsize=14)
-#mng = plt.get_current_fig_manager()                                         
-#mng.window.showMaximized()    
-#fig.set_size_inches([15.76,  8.52])
+from matplotlib import gridspec
+fig = plt.figure()
+gs = gridspec.GridSpec(len(cross_distance),1)
+gs.update(left=0.05, right=0.95, bottom=0.05, top=0.95, hspace=0.05)
+for i,key in enumerate(cross_distance.keys()):
+    ax = fig.add_subplot(gs[i,0])
+    ax.grid(linestyle=':', color='0.5')
+    ax.set_ylim([-400,400])
+    if not i == len(cross_distance.keys()):
+        ax.set_xticks = []
+    ax.plot(output['dates'], cross_distance[key]- np.nanmedian(cross_distance[key]), '-^', markersize=6)
+    ax.set_ylabel('distance [m]', fontsize=12)
+    ax.text(0.5,0.95,'Transect ' + key, bbox=dict(boxstyle="square", ec='k',fc='w'), ha='center',
+            va='top', transform=ax.transAxes, fontsize=14)
+mng = plt.get_current_fig_manager()                                         
+mng.window.showMaximized()    
+fig.set_size_inches([15.76,  8.52])
 
 #%% 5. tide correction
-# if you have already mapped the shorelines, load the output.pkl file
-#filepath = os.path.join(inputs['filepath'], sitename)
-#with open(os.path.join(filepath, sitename + '_output' + '.pkl'), 'rb') as f:
 
-filepath = 'P:\CUTTLER_CoastSat\CoastSat\data'
-with open(os.path.join(filepath, 'ExTide.pkl'),'rb') as f:
-    tide = pickle.load(f) 
+#load tide if already processed
+#filepath = 'P:\CUTTLER_CoastSat\CoastSat\data'
+#with open(os.path.join(filepath, 'ExTide.pkl'),'rb') as f:
+#    tide = pickle.load(f) 
+
+#process tide data
+tide_file = 'E:\Dropbox\Pilbara Island Remote Sensing\TideData\ExGulf_Tides.txt'
+tide = SDS_tools.process_tide_data(tide_file, output)
 
 #add zref and slope to settings above at some point
 cross_distance_corrected = SDS_tools.tide_correct(cross_distance,tide,settings['zref'],settings['beach_slope'])
+
+
+
+
+from matplotlib import gridspec
+fig = plt.figure()
+gs = gridspec.GridSpec(len(cross_distance_corrected),1)
+gs.update(left=0.05, right=0.95, bottom=0.05, top=0.95, hspace=0.05)
+for i,key in enumerate(cross_distance_corrected.keys()):
+    ax = fig.add_subplot(gs[i,0])
+    ax.grid(linestyle=':', color='0.5')
+    ax.set_ylim([-400,400])
+    if not i == len(cross_distance_corrected.keys()):
+        ax.set_xticks = []
+    ax.plot(output['dates'], cross_distance_corrected[key]- np.nanmedian(cross_distance_corrected[key]), '-^', markersize=6)
+    ax.set_ylabel('distance [m]', fontsize=12)
+    ax.text(0.5,0.95,'Transect ' + key, bbox=dict(boxstyle="square", ec='k',fc='w'), ha='center',
+            va='top', transform=ax.transAxes, fontsize=14)
+mng = plt.get_current_fig_manager()                                         
+mng.window.showMaximized()    
+fig.set_size_inches([15.76,  8.52])
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

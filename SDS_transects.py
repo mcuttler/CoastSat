@@ -88,7 +88,10 @@ def draw_transects(output, settings):
     ax1.set_ylabel('Northings [m]')
     ax1.grid(linestyle=':', color='0.5')
     for i in range(len(output['shorelines'])):
-        sl = output['shorelines'][i]
+        if settings['check_detection_sand_poly']:
+            sl = output['sand_points'][i]
+        else:       
+            sl = output['shorelines'][i]
         date = output['dates'][i]
         ax1.plot(sl[:, 0], sl[:, 1], '.', markersize=3, label=date.strftime('%d-%m-%Y'))
 #    ax1.legend()
