@@ -77,7 +77,7 @@ settings = {
     'buffer_size': 100,         # radius (in metres) of the buffer around sandy pixels considered in the shoreline detection
     'min_length_sl': 500,       # minimum length (in metres) of shoreline perimeter to be valid
     'cloud_mask_issue': False,  # switch this parameter to True if sand pixels are masked (in black) on many images
-    'beach_slope': 0.1, #beach slope for use in tide correction
+    'beach_slope': 0.14, #beach slope for use in tide correction
     'zref': 0.5   #reference height datum for tidal correction 
 }
 
@@ -247,26 +247,24 @@ cross_distance_corrected = SDS_tools.tide_correct(cross_distance,tide,settings['
 
 
 
-
+#plot each transect and correction applied
 from matplotlib import gridspec
 fig = plt.figure()
-gs = gridspec.GridSpec(len(cross_distance_corrected),1)
-gs.update(left=0.05, right=0.95, bottom=0.05, top=0.95, hspace=0.05)
-for i,key in enumerate(cross_distance_corrected.keys()):
+gs = gridspec.GridSpec(len(cross_distance),1)
+for i, key in enumerate(cross_distance_corrected.keys()):
     ax = fig.add_subplot(gs[i,0])
     ax.grid(linestyle=':', color='0.5')
-    ax.set_ylim([0,150])
-    if not i == len(cross_distance_corrected.keys()):
+    ax.set_ylim([-75,75])
+    if not i == len(cross_distance.keys()):
         ax.set_xticks = []
-    ax.plot(output['dates'], cross_distance_corrected[key], 'r-', markersize=6)
-    ax.plot(output['dates'], cross_distance[key],'b-')
+    ax.plot(output['dates'], cross_distance[key]- np.nanmedian(cross_distance[key]), '-^', markersize=6)
     ax.set_ylabel('distance [m]', fontsize=12)
     ax.text(0.5,0.95,'Transect ' + key, bbox=dict(boxstyle="square", ec='k',fc='w'), ha='center',
             va='top', transform=ax.transAxes, fontsize=14)
-mng = plt.get_current_fig_manager()                                         
-mng.window.showMaximized()    
-fig.set_size_inches([15.76,  8.52])
 
+
+fig = plt.figure()
+plt.plot(output['dates'],cross_distance['1']-cross_distance_corrected['1'],'k-')
 
 
 
