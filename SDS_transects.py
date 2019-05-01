@@ -211,7 +211,12 @@ def compute_intersection(output, transects, settings):
             corrected.
         
     """      
-    shorelines = output['shorelines']
+    #use sand_points as shoreline when using sand_polygon, else use typical CoastSat shoreline
+    if settings['check_detection_sand_poly']:
+        shorelines = output['sand_points']
+    else:
+        shorelines = output['shorelines']
+    
     along_dist = settings['along_dist']
     
     # initialise variables
