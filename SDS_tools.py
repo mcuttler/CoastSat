@@ -501,17 +501,32 @@ def process_tide_data(tide_file, output):
     return tide
 
 
-def tide_correct_sand_polygon(cross_distance, cross_distance_corrected, output, settings, x, y)    :
+def tide_correct_sand_polygon(cross_distance_corrected, output, settings, x, y)    :
     """
     To be filled in 
     MC - 2019
     
     """
-    #Calculate tidal correction
-    tide_correction = cross_distance - cross_distance_corrected
+    #Create output dictionary
+    sand_points_corrected = dict([])
+    sand_points_temp = dict([])
     
-    
-
+    #Calculate distance from origin to tide-corrected shoreline intersection
+    for i,transect in enumerate(cross_distance_corrected.keys()):
+        key = str(i+1)
+        xnew = []
+        ynew = []
+        
+        for j,sl in enumerate(cross_distance_corrected[transect]):
+            dx = math.sin(math.radians(heading[i]))/sl
+            dy = math.cos(math.radians(heading[i]))/sl
+            
+            xnew.append(x+dx)
+            ynew.append(y+dy)
+        
+        sand_points_temp[key] = np.array([xnew, ynew])
+        
+        
     
     
     
