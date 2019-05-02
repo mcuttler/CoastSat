@@ -6,6 +6,7 @@
 # load modules
 import os
 import numpy as np
+import math
 import matplotlib.pyplot as plt
 import pdb
 
@@ -190,6 +191,46 @@ def load_transects_from_kml(filename):
 
     return transects
 
+def calc_island_transects(x,y,settings):
+    """ 
+    This code is for calculating transecs radiating from a single point. It uses the 
+    x,y (input) as the origin for the transects and calculates transects of given length
+    and heading (clockwise from North)
+    
+    Arguments:
+    ----------
+        x: int or float
+            x-coordinate of transect origin
+        
+        y: int or float
+            y-coordinate of transect origin
+        
+        settings: dict
+            contains transect_length
+        
+        heading: numpy array 
+            defines all headings for transects - angles provided as clockwise from North
+        
+    Return:
+    ---------
+          transects: dict
+            contains the X and Y coordinates of each transect.  
+           
+    """   
+    #create dictionary for output
+    transects = dict([])
+                                     
+    for i,j in enumerate(settings['heading']):
+        
+        #calculate x and y --- could just use create_transect above
+        xx = (math.sin(math.radians(j))*settings['transect_length'])+x
+        yy = (math.cos(math.radians(j))*settings['transect_length'])+y
+        key = str(i+1)
+        transects[key] = np.array([[x, y], [xx, yy]])
+        
+    return transects 
+
+
 def compute_intersection(output, transects, settings):
     """
     Computes the intersection between the 2D mapped shorelines and the transects, to generate
@@ -302,3 +343,7 @@ def compute_intersection(output, transects, settings):
         cross_dist[key] = chainage['median'][:,j]    
     
     return cross_dist
+
+
+
+

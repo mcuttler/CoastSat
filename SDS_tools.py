@@ -443,7 +443,7 @@ def tide_correct(cross_distance, tide, zref, beta):
             for i,ztide in enumerate(tide):              
                delX = (zref-ztide)/beta             
                transect_corrected.append(transect[i]+delX)
-                
+                               
             transect_corrected = np.array(transect_corrected)
             cross_distance_corrected[key] = transect_corrected        
     else:
@@ -500,8 +500,18 @@ def process_tide_data(tide_file, output):
     
     return tide
 
-        
+
+def tide_correct_sand_polygon(cross_distance, cross_distance_corrected, output, settings, x, y)    :
+    """
+    To be filled in 
+    MC - 2019
     
+    """
+    #Calculate tidal correction
+    tide_correction = cross_distance - cross_distance_corrected
+    
+    
+
     
     
     

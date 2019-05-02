@@ -181,16 +181,17 @@ with open(os.path.join(filepath, sitename + '_output' + '.pkl'), 'rb') as f:
 # now we have to define cross-shore transects over which to quantify the shoreline changes
 # each transect is defined by two points, its origin and a second point that defines its orientation
 # the parameter transect length determines how far from the origin the transect will span
-settings['transect_length'] = 250 
+settings['transect_length'] = 300 
 
 # there are 3 options to create the transects:
 # - option 1: draw the shore-normal transects along the beach
 # - option 2: load the transect coordinates from a .kml file
 # - option 3: create the transects manually by providing the coordinates
 # - option 4: load transects from pre-made pickle file
+# - option 5: calculate transects emanating from single origin point (e.g. for islands)
 
 # option 1: draw origin of transect first and then a second point to define the orientation
-transects = SDS_transects.draw_transects(output, settings)
+#transects = SDS_transects.draw_transects(output, settings)
     
 # option 2: load the transects from a KML file
 #kml_file = 'NARRA_transects.kml'
@@ -206,6 +207,16 @@ transects = SDS_transects.draw_transects(output, settings)
 #filepath = os.path.join(inputs['filepath'], sitename)
 #with open(os.path.join(filepath, sitename + '_transects' + '.pkl'), 'rb') as f:
 #    transects = pickle.load(f)
+
+#option 5: transects from single origin point
+ang_start = 0 
+ang_end = 360
+ang_step = 45 #degree step for calculating transects 
+settings['heading'] = np.array(list(range(ang_start,ang_end,ang_step)))
+
+EvaCenter = [234731.70, 7573554.25]
+
+transects = SDS_transects.calc_island_transects(EvaCenter[0],EvaCenter[1],settings)
     
 # intersect the transects with the 2D shorelines to obtain time-series of cross-shore distance
 settings['along_dist'] = 10
@@ -213,25 +224,25 @@ cross_distance = SDS_transects.compute_intersection(output, transects, settings)
 
    
 # plot the time-series
-from matplotlib import gridspec
-fig = plt.figure()
-gs = gridspec.GridSpec(len(cross_distance),1)
-gs.update(left=0.05, right=0.95, bottom=0.05, top=0.95, hspace=0.05)
-for i,key in enumerate(cross_distance.keys()):
-    ax = fig.add_subplot(gs[i,0])
-    ax.grid(linestyle=':', color='0.5')
-    ax.set_ylim([-75,75])
-    if not i == len(cross_distance.keys()):
-        ax.set_xticks = []
-    ax.plot(output['dates'], cross_distance[key]- np.nanmedian(cross_distance[key]), '-^', markersize=6)
-    ax.set_ylabel('distance [m]', fontsize=12)
-    ax.text(0.5,0.95,'Transect ' + key, bbox=dict(boxstyle="square", ec='k',fc='w'), ha='center',
-            va='top', transform=ax.transAxes, fontsize=14)
-mng = plt.get_current_fig_manager()                                         
-mng.window.showMaximized()    
-fig.set_size_inches([15.76,  8.52])
+#from matplotlib import gridspec
+#fig = plt.figure()
+#gs = gridspec.GridSpec(len(cross_distance),1)
+#gs.update(left=0.05, right=0.95, bottom=0.05, top=0.95, hspace=0.05)
+#for i,key in enumerate(cross_distance.keys()):
+#    ax = fig.add_subplot(gs[i,0])
+#    ax.grid(linestyle=':', color='0.5')
+#    ax.set_ylim([-75,75])
+#    if not i == len(cross_distance.keys()):
+#        ax.set_xticks = []
+#    ax.plot(output['dates'], cross_distance[key]- np.nanmedian(cross_distance[key]), '-^', markersize=6)
+#    ax.set_ylabel('distance [m]', fontsize=12)
+#    ax.text(0.5,0.95,'Transect ' + key, bbox=dict(boxstyle="square", ec='k',fc='w'), ha='center',
+#            va='top', transform=ax.transAxes, fontsize=14)
+#mng = plt.get_current_fig_manager()                                         
+#mng.window.showMaximized()    
+#fig.set_size_inches([15.76,  8.52])
 
-#%% 5. tide correction
+#%% 5. tide correction for transects and sand polygon
 
 #load tide if already processed
 #filepath = 'P:\CUTTLER_CoastSat\CoastSat\data'
@@ -242,31 +253,34 @@ fig.set_size_inches([15.76,  8.52])
 tide_file = 'E:\Dropbox\Pilbara Island Remote Sensing\TideData\ExGulf_Tides.txt'
 tide = SDS_tools.process_tide_data(tide_file, output)
 
-#add zref and slope to settings above at some point
+#correct each transect
 cross_distance_corrected = SDS_tools.tide_correct(cross_distance,tide,settings['zref'],settings['beach_slope'])
+
+#Use transect correction to adjust entire sand polygon
 
 
 
 #plot each transect and correction applied
-from matplotlib import gridspec
-fig = plt.figure()
-gs = gridspec.GridSpec(len(cross_distance),1)
-for i, key in enumerate(cross_distance_corrected.keys()):
-    ax = fig.add_subplot(gs[i,0])
-    ax.grid(linestyle=':', color='0.5')
-    ax.set_ylim([-75,75])
-    if not i == len(cross_distance.keys()):
-        ax.set_xticks = []
-    ax.plot(output['dates'], cross_distance[key]- np.nanmedian(cross_distance[key]), '-^', markersize=6)
-    ax.set_ylabel('distance [m]', fontsize=12)
-    ax.text(0.5,0.95,'Transect ' + key, bbox=dict(boxstyle="square", ec='k',fc='w'), ha='center',
-            va='top', transform=ax.transAxes, fontsize=14)
+#from matplotlib import gridspec
+#fig = plt.figure()
+#gs = gridspec.GridSpec(len(cross_distance),1)
+#for i, key in enumerate(cross_distance_corrected.keys()):
+#    ax = fig.add_subplot(gs[i,0])
+#    ax.grid(linestyle=':', color='0.5')
+#    ax.set_ylim([-75,75])
+#    if not i == len(cross_distance.keys()):
+#        ax.set_xticks = []
+#    ax.plot(output['dates'], cross_distance[key]- np.nanmedian(cross_distance[key]), '-^', markersize=6)
+#    ax.set_ylabel('distance [m]', fontsize=12)
+#    ax.text(0.5,0.95,'Transect ' + key, bbox=dict(boxstyle="square", ec='k',fc='w'), ha='center',
+#            va='top', transform=ax.transAxes, fontsize=14)
+#
+#
+#fig = plt.figure()
+#plt.plot(output['dates'],cross_distance['1']-cross_distance_corrected['1'],'k-')
 
-
-fig = plt.figure()
-plt.plot(output['dates'],cross_distance['1']-cross_distance_corrected['1'],'k-')
-
-
+###########################################################################
+#Calculate tidally corrected sand_polygon -need to 
 
 
 
