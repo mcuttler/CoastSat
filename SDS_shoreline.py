@@ -782,14 +782,14 @@ def extract_shorelines(metadata, settings):
             #######################################################################################
             #######################################################################################
 
-            # create binary image with True where the sand pixels and non-classified pixels are
+            # create binary image with True where the sand pixels
             im_binary_sand = (im_classif == 1)
             # fill the interior of the ring of sand around the island
-            im_binary_sand_closed = morphology.remove_small_holes(im_binary_sand, area_threshold=5000, connectivity=1)
+            im_binary_sand_closed = morphology.remove_small_holes(im_binary_sand, area_threshold=3000, connectivity=1)
             # vectorise the contours
             sand_contours = measure.find_contours(im_binary_sand_closed, 0.5)
             
-            # if several contours, it means there is a gap --> merge sand and other pixels
+            # if several contours, it means there is a gap --> merge sand and non-classified pixels
             if len(sand_contours) > 1:
                 im_binary_sand = np.logical_or(im_classif == 1, im_classif == 0)
                 im_binary_sand_closed = morphology.remove_small_holes(im_binary_sand, area_threshold=3000, connectivity=1)
@@ -800,7 +800,54 @@ def extract_shorelines(metadata, settings):
                     for j in range(len(sand_contours)):
                         n_points.append(sand_contours[j].shape[0])
                     sand_contours = [sand_contours[np.argmax(n_points)]]
- 
+                    
+                    # convert to world coordinates
+                    sand_contours_world = SDS_tools.convert_pix2world(sand_contours[0],georef)
+                    sand_contours_coords = SDS_tools.convert_epsg(sand_contours_world, image_epsg, settings['output_epsg'])[:,:-1]               
+                    # make a shapely polygon
+                    linear_ring = LinearRing(coordinates=sand_contours_coords)
+                    sand_polygon = Polygon(shell=linear_ring, holes=None)
+                else:    
+                    # convert to world coordinates
+                    sand_contours_world = SDS_tools.convert_pix2world(sand_contours[0],georef)
+                    sand_contours_coords = SDS_tools.convert_epsg(sand_contours_world, image_epsg, settings['output_epsg'])[:,:-1]               
+                    # make a shapely polygon
+                    linear_ring = LinearRing(coordinates=sand_contours_coords)
+                    sand_polygon = Polygon(shell=linear_ring, holes=None)
+                                      
+            else:    
+                # convert to world coordinates
+                sand_contours_world = SDS_tools.convert_pix2world(sand_contours[0],georef)
+                sand_contours_coords = SDS_tools.convert_epsg(sand_contours_world, image_epsg, settings['output_epsg'])[:,:-1]               
+                # make a shapely polygon
+                linear_ring = LinearRing(coordinates=sand_contours_coords)
+                sand_polygon = Polygon(shell=linear_ring, holes=None)
+            
+            # check if perimeter of polygon matches with reference shoreline
+            # if much longer (1.5 times) then also merge sand and non-classified pixels
+            if linear_ring.length > 1.5*LineString(settings['reference_shoreline']).length:
+                im_binary_sand = np.logical_or(im_classif == 1, im_classif == 0)
+                im_binary_sand_closed = morphology.remove_small_holes(im_binary_sand, area_threshold=3000, connectivity=1)
+                sand_contours = measure.find_contours(im_binary_sand_closed, 0.5)
+                # if there are still more than one contour, only keep the one with more points
+                if len(sand_contours) > 1:
+                    n_points = []
+                    for j in range(len(sand_contours)):
+                        n_points.append(sand_contours[j].shape[0])
+                    sand_contours = [sand_contours[np.argmax(n_points)]]   
+                # convert to world coordinates
+                sand_contours_world = SDS_tools.convert_pix2world(sand_contours[0],georef)
+                sand_contours_coords = SDS_tools.convert_epsg(sand_contours_world, image_epsg, settings['output_epsg'])[:,:-1]               
+                # make a shapely polygon
+                linear_ring = LinearRing(coordinates=sand_contours_coords)
+                sand_polygon = Polygon(shell=linear_ring, holes=None)
+                
+            # calculate the attributes of sand polygon
+            sand_area = sand_polygon.area
+            sand_perimeter = sand_polygon.exterior.length
+            sand_centroid = np.array(sand_polygon.centroid.coords)
+            sand_points = np.array(sand_polygon.exterior.coords)
+            
 #################################################################################
                     #DELETE THIS SECTION
 #################################################################################                          
@@ -829,23 +876,10 @@ def extract_shorelines(metadata, settings):
 #                    sitename, 'jpg_files', 'sand_polygons',
 #                    filenames[i][:18] + '_' + satname + '_' + sitename + '.jpg'))
 ######################################################################################
-            
-            # convert to world coordinates
-            sand_contours_world = SDS_tools.convert_pix2world(sand_contours[0],georef)
-            sand_contours_coords = SDS_tools.convert_epsg(sand_contours_world, image_epsg, settings['output_epsg'])[:,:-1]               
-            # make a shapely polygon
-            linear_ring = LinearRing(coordinates=sand_contours_coords)
-            sand_polygon = Polygon(shell=linear_ring, holes=None)
-            # calculate the attributes
-            sand_area = sand_polygon.area
-            sand_perimeter = sand_polygon.exterior.length
-            sand_centroid = np.array(sand_polygon.centroid.coords)
-            sand_points = np.array(sand_polygon.exterior.coords)
 
             #######################################################################################
             ####################################################################################### 
             
-               
             # extract water line contours
             # if there aren't any sandy pixels, use find_wl_contours1 (traditional method), 
             # otherwise use find_wl_contours2 (enhanced method with classification)

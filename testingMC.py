@@ -4,302 +4,214 @@ Created on Wed Apr  3 09:26:17 2019
 
 @author: cuttl
 """
-#%% Edits to add to SDS_shoreline.extract_shoreline
+#%% tide correction
+import pandas as pd
+from datetime import tzinfo, timedelta, datetime, timezone
+import numpy
+import pickle
 
-    sitename = settings['inputs']['sitename']
-    filepath_data = settings['inputs']['filepath']
-    # initialise output structure
-    output = dict([])
-    # create a subfolder to store the .jpg images showing the detection
-    filepath_jpg = os.path.join(filepath_data, sitename, 'jpg_files', 'detection')
-    if not os.path.exists(filepath_jpg):      
-            os.makedirs(filepath_jpg)
+#load EVA DATA
+filepath = 'P:\CUTTLER_CoastSat\CoastSat\data\EVA'
+with open(os.path.join(filepath, 'EVA_output.pkl'), 'rb') as f:
+        output = pickle.load(f) 
+        
+tideraw = pd.read_csv('E:\Dropbox\Pilbara Island Remote Sensing\TideData\ExGulf_Tides.txt',sep='\t')
+tideraw = tideraw.values    
+             
+tide = dict([])
+tidetime = []
+ztide = []
+
+for i,row in enumerate(tideraw):
+    #convert tide time to UTC from WA local time (UTC+8 hrs)
+    dumtime = datetime(int(row[0]), int(row[1]), int(row[2]), int(row[3]), int(row[4]), int(row[5])) - timedelta(hours = 8)   
+    dumtimestamp = datetime.timestamp(dumtime)
     
-    print('Mapping shorelines:')
+    tidetime.append(dumtimestamp)
+    ztide.append(row[-1])
+    del dumtime, i, row
+    
 
-    # loop through satellite list
-    #for satname in metadata.keys():
-        satname = 'S2'    
-        # get images
-        filepath = SDS_tools.get_filepath(settings['inputs'],satname)
-        filenames = metadata[satname]['filenames']
+tide['time'] = numpy.array([tidetime])
+tide['time'] = numpy.reshape(tide['time'],-1)
+tide['ztide'] = numpy.array([ztide])
+tide['ztide'] = numpy.reshape(tide['ztide'],-1)
 
-        # initialise some variables
-        output_timestamp = []  # datetime at which the image was acquired (UTC time)
-        output_shoreline = []  # vector of shoreline points 
-        output_filename = []   # filename of the images from which the shorelines where derived
-        output_cloudcover = [] # cloud cover of the images 
-        output_geoaccuracy = []# georeferencing accuracy of the images
-        output_idxkeep = []    # index that were kept during the analysis (cloudy images are skipped)
-        # sand fields    
-        output_sand_area = []       #area of sandy pixles identified from classification 
-        output_sand_perimeter = []  #perimieter of sandy pixels
-        output_sand_centroid = []   #coordinates center of mass of sandy pixels
-        output_sand_points = []     #coordinates of sandy pixels
-        
-        # load classifiers and convert settings['min_beach_area'] and settings['buffer_size'] 
-        # from metres to pixels
-        if satname in ['L5','L7','L8']:
-            clf = joblib.load(os.path.join(os.getcwd(), 'classifiers', 'NN_4classes_Landsat.pkl'))
-            pixel_size = 15
-        elif satname == 'S2':
-            clf = joblib.load(os.path.join(os.getcwd(), 'classifiers', 'NN_4classes_S2.pkl'))
-            pixel_size = 10
-        buffer_size_pixels = np.ceil(settings['buffer_size']/pixel_size)
-        min_beach_area_pixels = np.ceil(settings['min_beach_area']/pixel_size**2)
-        
-        # loop through the images
-        #for i in range(len(filenames)):
-            i=5
-            print('\r%s:   %d%%' % (satname,int(((i+1)/len(filenames))*100)), end='')
+image_dates = []
+#parse tide for overlapping times with images
+for i, date in enumerate(output['dates']):
+    image_dates.append(datetime.timestamp(date))
+    del i, date
+    
+ind_min = [] 
+for i, date in enumerate(image_dates):
+    dum = numpy.absolute(date-tide['time'])
+    #find index of min value
+    ind_min.append(numpy.argmin(dum))
+    del i, date
 
-            # get image filename
-            fn = SDS_tools.get_filenames(filenames[i],filepath, satname)
-            # preprocess image (cloud mask + pansharpening/downsampling)
-            im_ms, georef, cloud_mask, im_extra, imQA = SDS_preprocess.preprocess_single(fn, satname, settings['cloud_mask_issue'])
-            # get image spatial reference system (epsg code) from metadata dict
-            image_epsg = metadata[satname]['epsg'][i]
-            # calculate cloud cover
-            cloud_cover = np.divide(sum(sum(cloud_mask.astype(int))),
-                                    (cloud_mask.shape[0]*cloud_mask.shape[1]))
-            # skip image if cloud cover is above threshold
-            #if cloud_cover > settings['cloud_thresh']:
-            #    continue
-            
-            # classify image in 4 classes (sand, whitewater, water, other) with NN classifier
-            im_classif, im_labels = SDS_shoreline.classify_image_NN(im_ms, im_extra, cloud_mask,
-                                    min_beach_area_pixels, clf)
-            # if the classifier does not detect sand pixels skip this image
-#            if sum(sum(im_labels[:,:,0])) == 0:
-#                continue
+tide_out = dict([])
+tide_out['time_image'] = tide['time'][ind_min]
+tide_out['ztide_image']=tide['ztide'][ind_min] - 1.412
 
-            #######################################################################################
-            # SAND POLYGONS (kilian)
-            #######################################################################################
-            #######################################################################################
+time_image_UTC = []
+for i,time in enumerate(tide_out['time_image']):
+    time_image_UTC.append(datetime.timestamp(datetime.fromtimestamp(time)-timedelta(hours=8)))
 
-            # create binary image with True where the sand pixels and non-classified pixels are
-            im_binary_sand = (im_classif == 1)
-            # fill the interior of the ring of sand around the island
-            im_binary_sand_closed = morphology.remove_small_holes(im_binary_sand, area_threshold=3000, connectivity=1)
-            # vectorise the contours
-            sand_contours = measure.find_contours(im_binary_sand_closed, 0.5)
-            
-            # if several contours, it means there is a gap --> merge sand and other pixels
-            if len(sand_contours) > 1:
-                im_binary_sand = np.logical_or(im_classif == 1, im_classif == 0)
-                im_binary_sand_closed = morphology.remove_small_holes(im_binary_sand, area_threshold=3000, connectivity=1)
-                sand_contours = measure.find_contours(im_binary_sand_closed, 0.5)
-                # if there are still more than one contour, only keep the one with more points
-                if len(sand_contours) > 1:
-                    n_points = []
-                    for j in range(len(sand_contours)):
-                        n_points.append(sand_contours[j].shape[0])
-                    sand_contours = [sand_contours[np.argmax(n_points)]]
+tide_out['time_image_UTC']=time_image_UTC
+#save tide data
+filepath = 'P:\CUTTLER_CoastSat\CoastSat\data'
+with open(os.path.join(filepath, 'ExTide.pkl'), 'wb') as f:
+        pickle.dump(tide_out, f) 
+#%%
+    tide_file = 'E:\Dropbox\Pilbara Island Remote Sensing\TideData\ExGulf_Tides.txt'
+    # import data from tide file
+    tideraw = pd.read_csv(tide_file, sep='\t')
+    tideraw = tideraw.values
 
-            # convert to world coordinates
-            sand_contours_world = SDS_tools.convert_pix2world(sand_contours[0],georef)
-            sand_contours_coords = SDS_tools.convert_epsg(sand_contours_world, image_epsg, settings['output_epsg'])[:,:-1]               
-            # make a shapely polygon
-            linear_ring = LinearRing(coordinates=sand_contours_coords)
-            sand_polygon = Polygon(shell=linear_ring, holes=None)
-            # calculate the attributes
-            sand_area = sand_polygon.area
-            sand_perimeter = sand_polygon.exterior.length
-            sand_centroid = np.array(sand_polygon.centroid.coords)
-            sand_points = np.array(sand_polygon.exterior.coords)
+    #create tide_data dictionary    
+    tide_data = {'dates': [], 'tide': []}
 
-            #######################################################################################
-            ####################################################################################### 
-            
-               
-            # extract water line contours
-            # if there aren't any sandy pixels, use find_wl_contours1 (traditional method), 
-            # otherwise use find_wl_contours2 (enhanced method with classification)
-            try: # use try/except structure for long runs
-                if sum(sum(im_labels[:,:,0])) == 0 :
-                    # compute MNDWI (SWIR-Green normalized index) grayscale image
-                    im_mndwi = nd_index(im_ms[:,:,4], im_ms[:,:,1], cloud_mask)
-                    # find water contourson MNDWI grayscale image
-                    contours_mwi = find_wl_contours1(im_mndwi, cloud_mask)
-                else:
-                    # use classification to refine threshold and extract sand/water interface
-                    is_reference_sl = 'reference_shoreline' in settings.keys()
-                    contours_wi, contours_mwi = find_wl_contours2(im_ms, im_labels, 
-                                                cloud_mask, buffer_size_pixels, is_reference_sl)
-            except:
-                continue
-            
-            # process water contours into shorelines
-            shoreline = process_shoreline(contours_mwi, georef, image_epsg, settings)
-            
-            if settings['check_detection_sand_poly']:
-                date = filenames[i][:18]
-                skip_image = SDS_shoreline.show_detection_sand_poly(im_ms, cloud_mask, im_binary_sand, im_binary_sand_closed, 
-                                                      sand_contours, settings, date, satname)
-                # if user decides to skip the image
-                if skip_image:
-                    continue
+    for i,row in enumerate(tideraw):
+        #convert tide time to UTC from WA local time (UTC+8 hrs) - assumes text file has time in Local time
+        dumtime = datetime(int(row[0]), int(row[1]), int(row[2]), int(row[3]), int(row[4]), int(row[5]))
+        dumtime = datetime.timestamp(dumtime)
+        dumtime = datetime.fromtimestamp(dumtime,tz=timezone.utc)
+        tide_data['dates'].append(dumtime)
+        tide_data['tide'].append(row[-1])
+    
+    # extract tide heights corresponding to shoreline detections
+    tide = []
+    def find(item, lst):
+        start = 0
+        start = lst.index(item, start)
+        return start
+    
+    for i,date in enumerate(output['dates']):
+        print('\rCalculating tides: %d%%' % int((i+1)*100/len(output['dates'])), end='')
+        tide.append(tide_data['tide'][find(min(item for item in tide_data['dates'] if item > date), tide_data['dates'])])
+    
+    tide = np.array(tide)
+#%%
+    cross_distance_corrected = dict([])
+    #Check that length of tide time series is same as SDS timeseries
+    #Cross distance should have at least 1 transect
+    if len(cross_distance['1'])==len(tide['ztide_image']):
+        #Cyclone through all transects
+        for key,transect in cross_distance.items():
+            transect_corrected = []   
+          
+            for i,ztide in enumerate(tide['ztide_image']):
+                delX = (zref-ztide)/beta             
+                transect_corrected.append(transect[i]+delX)
                 
-            elif settings['check_detection']:
-                date = filenames[i][:18]
-                skip_image = show_detection(im_ms, cloud_mask, im_labels, shoreline,
-                                            image_epsg, georef, settings, date, satname)
-                # if user decides to skip the image
-                if skip_image:
-                    continue
-            
-            # append to output variables
-            output_timestamp.append(metadata[satname]['dates'][i])
-            output_shoreline.append(shoreline)
-            output_filename.append(filenames[i])
-            output_cloudcover.append(cloud_cover)
-            output_geoaccuracy.append(metadata[satname]['acc_georef'][i])
-            output_idxkeep.append(i)
-            # sand fields
-            output_sand_area.append(sand_area)
-            output_sand_perimeter.append(sand_perimeter)
-            output_sand_centroid.append(sand_centroid)
-            output_sand_points.append(sand_points)
-            
-        # create dictionnary of output
-        output[satname] = {
-                'dates': output_timestamp,
-                'shorelines': output_shoreline,
-                'filename': output_filename,
-                'cloud_cover': output_cloudcover,
-                'geoaccuracy': output_geoaccuracy,
-                'idx': output_idxkeep,
-                'sand_area': output_sand_area,
-                'sand_perimeter': output_sand_perimeter,
-                'sand_centroid': output_sand_centroid,
-                'sand_points': output_sand_points,
-                }
-    # change the format to have one list sorted by date with all the shorelines (easier to use)
-    output = SDS_tools.merge_output(output)
-    
-    # save outputput structure as output.pkl
-    filepath = os.path.join(filepath_data, sitename)
-    with open(os.path.join(filepath, sitename + '_output.pkl'), 'wb') as f:
-        pickle.dump(output, f)
-        
-    # save output as kml for GIS applications
-    kml = simplekml.Kml()
-    for i in range(len(output['shorelines'])):
-        if len(output['shorelines'][i]) == 0:
-            continue
-        sl = output['shorelines'][i]
-        date = output['dates'][i]
-        newline = kml.newlinestring(name= date.strftime('%Y-%m-%d %H:%M:%S'))
-        newline.coords = sl
-        newline.description = satname + ' shoreline' + '\n' + 'acquired at ' + date.strftime('%H:%M:%S') + ' UTC'
-    kml.save(os.path.join(filepath, sitename + '_output.kml'))  
-    
-    # save sand polygons as kml
-    kml = simplekml.Kml()
-    for i in range(len(output['sand_points'])):
-        if len(output['sand_points'][i]) == 0:
-            continue
-        sl = output['sand_points'][i]
-        date = output['dates'][i]
-        newline = kml.newpolygon(name=date.strftime('%Y-%m-%d %H:%M:%S'), outerboundaryis=sl)
-        newline.description = satname + ' shoreline' + '\n' + 'acquired at ' + date.strftime('%H:%M:%S') + ' UTC'
-    kml.save(os.path.join(filepath, sitename + '_sand_polygons.kml')) 
-        
-    return output
-
-#%%
-sand_poly_pix = np.zeros([1,2])
-
-for i,coords in enumerate(sand_contours):
-    sand_poly_pix = np.concatenate((sand_poly_pix,coords))
-
-#get rid of first zeros
-sand_poly_pix = sand_poly_pix[1:len(sand_poly_pix),:]    
-sand_poly = SDS_tools.convert_pix2world(sand_poly_pix,georef)
-sand_poly_WGS84 = SDS_tools.convert_epsg(sand_poly,28350,4326)
-# save output as kml for QGIS applications
-        kml = simplekml.Kml()
-        
-        #for i,x in enumerate(sand_poly):
-        #    kmlxy
-        kml.newlinestring(name="Sand_poly", description="contour of sand area",
-                        coords=sand_poly)  
-        kml.save('D:\Projects\HANSEN_UWA-UNSW_Linkage\Analysis\CoastSat\CoastSat\data\EVA\sand_poly_test.kml')
-# save output as kml for GoogleEarth applications
-        kml84 = simplekml.Kml()
-        
-        #for i,x in enumerate(sand_poly):
-        #    kmlxy
-        kml84.newlinestring(name="Sand_poly", description="contour of sand area",
-                        coords=sand_poly_WGS84)  
-        kml84.save('D:\Projects\HANSEN_UWA-UNSW_Linkage\Analysis\CoastSat\CoastSat\data\EVA\sand_poly_test_WGS84.kml')
-
-           
-#%% random plotting
-                plt.plot(output['dates'],output['sand_area'],'b-x')
-
-
-for i, coords in enumerate(output['sand_centroid']):
-    plt.plot(coords[0],coords[1],'.')
-
-
-import scipy
-scipy.stats.linregress(test,output['sand_area'])
-
-import time
-test = []
-for i, dum in enumerate(output['dates']):
-    test.append(time.mktime(dum.timetuple()))
-
-for i,centroid in enumerate(output['sand_centroid']):
-    plt.plot(test[i],centroid[0],'r.')
-
-<<<<<<< HEAD
-#%%
-#Calculate when image is L8 or S2 and plot in different colors
-dum = output['satname']
-test=np.array([])
-test2=np.array([])
-for i in range(len(dum)):
-    test.append(dum[i]=='L8')
-    test2.append(dum[i]=='S2')
-
-plt.plot(output['dates'],output['sand_area'],'b.-')
-plt.plot(output['dates'][test],output['sand_area'][test],'r.')
-            
-
-#%% check eva sat codes
-import matplotlib.pyplot as plt
-import matplotlib.lines as mlines
-plt.plot(output['dates'],output['sand_area'],'k-',linewidth=0.5)
-
-for i,sat in enumerate(output['satname']):
-    if sat == 'L8':
-        plt.plot(output['dates'][i],output['sand_area'][i],'r.')
-       # plt.plot(output['dates'][i],sand_area2[i],'r*')
+            transect_corrected = np.array(transect_corrected)
+            cross_distance_corrected[key] = transect_corrected        
     else:
-        plt.plot(output['dates'][i],output['sand_area'][i],'b.')
-        #plt.plot(output['dates'][i],sand_area2[i],'b*')
+        print('ERROR - time series not same lenght!')
+#%%
+        for i, sand in enumerate(output['sand_points']):
+            plt.plot(sand[:,0],sand[:,1],'.')
+        
+        for key, transect in transects.items():
+            plt.plot(transect[:,0],transect[:,1],'b-')
+        
+        plt.grid()
+    
+    #%%
+    
+from matplotlib import gridspec
+fig = plt.figure()
+gs = gridspec.GridSpec(len(cross_distance),1)
+gs.update(left=0.05, right=0.95, bottom=0.05, top=0.95, hspace=0.05)
+for i,key in enumerate(cross_distance.keys()):
+    ax = fig.add_subplot(gs[i,0])
+    ax.grid(linestyle=':', color='0.5')
+    ax.set_ylim([-400,400])
+    if not i == len(cross_distance.keys()):
+        ax.set_xticks = []
+    ax.plot(output['dates'], cross_distance[key], '-^', markersize=6)
+    ax.set_ylabel('distance [m]', fontsize=12)
+    ax.text(0.5,0.95,'Transect ' + key, bbox=dict(boxstyle="square", ec='k',fc='w'), ha='center',
+            va='top', transform=ax.transAxes, fontsize=14)
+mng = plt.get_current_fig_manager()                                         
+mng.window.showMaximized()    
+fig.set_size_inches([15.76,  8.52])
 
-plt.grid()
-plt.ylabel('sub-aerial sand area (m^2)')
+#%% Transect calculation
 
-red_dot = mlines.Line2D([], [], color='red', marker='.',
-                          markersize=15, label='L8')
+    if settings['check_detection_sand_poly']:
+        shorelines = output['sand_points']
+    else:
+        shorelines = output['shorelines']
+    
+    along_dist = settings['along_dist']
+    
+    # initialise variables
+    chainage_mtx = np.zeros((len(shorelines),len(transects),6))
+    idx_points = []
+    
+    #for i in range(len(shorelines)):
 
-blue_dot = mlines.Line2D([], [], color='blue', marker='.',
-                          markersize=15, label='S2')
-
-plt.legend(handles=[red_dot,blue_dot])
-plt.title('Fly Island')
-
-
-#%% re calculate sand_area for L8 satellites using 30m pix
-sand_area = output['sand_area']
-sand_area2 = np.array(output['sand_area'],dtype=float)
-for i,satname in enumerate(output['satname']):
-    if satname == 'L8':
-        sand_area2[i]=output['sand_area'][i]*2
-
+        sl = shorelines[i]
+        idx_points_all = []
+        
+        for j,key in enumerate(list(transects.keys())): 
+            
+            # compute rotation matrix
+            X0 = transects[key][0,0]
+            Y0 = transects[key][0,1]
+            temp = np.array(transects[key][-1,:]) - np.array(transects[key][0,:])
+            phi = np.arctan2(temp[1], temp[0])
+            Mrot = np.array([[np.cos(phi), np.sin(phi)],[-np.sin(phi), np.cos(phi)]])
+    
+            # calculate point to line distance between shoreline points and the transect
+            p1 = np.array([X0,Y0])
+            p2 = transects[key][-1,:]
+            d_line = np.abs(np.cross(p2-p1,sl-p1)/np.linalg.norm(p2-p1))
+            # calculate the distance between shoreline points and the origin of the transect
+            d_origin = np.array([np.linalg.norm(sl[k,:] - p1) for k in range(len(sl))])
+            # find the shoreline points that are close to the transects and to the origin
+            # the distance to the origin is hard-coded here to 1 km 
+            logic_close = np.logical_and(d_line <= along_dist, d_origin <= 1000)
+            idx_close = SDS_transects.find_indices(logic_close, lambda e: e == True)
+            idx_points_all.append(idx_close)
+            
+            # in case there are no shoreline points close to the transect 
+            if not idx_close:
+                chainage_mtx[i,j,:] = np.tile(np.nan,(1,6))
+            else:
+                # change of base to shore-normal coordinate system
+                xy_close = np.array([sl[idx_close,0],sl[idx_close,1]]) - np.tile(np.array([[X0],
+                                   [Y0]]), (1,len(sl[idx_close])))
+                xy_rot = np.matmul(Mrot, xy_close)
+                    
+                # compute mean, median, max, min and std of chainage position
+                n_points = len(xy_rot[0,:])
+                mean_cross = np.nanmean(xy_rot[0,:])
+                median_cross = np.nanmedian(xy_rot[0,:])
+                max_cross = np.nanmax(xy_rot[0,:])
+                min_cross = np.nanmin(xy_rot[0,:])
+                std_cross = np.nanstd(xy_rot[0,:])
+                # store all statistics
+                chainage_mtx[i,j,:] = np.array([mean_cross, median_cross, max_cross,
+                            min_cross, n_points, std_cross])
+    
+        # store the indices of the shoreline points that were used
+        idx_points.append(idx_points_all)
+     
+    # format into dictionnary
+    chainage = dict([])
+    chainage['mean'] = chainage_mtx[:,:,0]
+    chainage['median'] = chainage_mtx[:,:,1]
+    chainage['max'] = chainage_mtx[:,:,2]
+    chainage['min'] = chainage_mtx[:,:,3]
+    chainage['npoints'] = chainage_mtx[:,:,4]
+    chainage['std'] = chainage_mtx[:,:,5]
+    chainage['idx_points'] = idx_points
+        
+    # only return the median
+    cross_dist = dict([])
+    for j,key in enumerate(list(transects.keys())): 
+        cross_dist[key] = chainage['median'][:,j]    
         

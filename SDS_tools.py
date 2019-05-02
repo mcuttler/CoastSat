@@ -8,6 +8,10 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import pdb
+import math
+import pandas as pd
+import pickle
+from datetime import tzinfo, timedelta, datetime, timezone
 
 # other modules
 from osgeo import gdal, ogr, osr
@@ -405,3 +409,115 @@ def merge_output(output):
         output_all[key] = [output_all[key][i] for i in idx_sorted]
 
     return output_all
+
+def tide_correct(cross_distance, tide, zref, beta):
+    """
+    Function for tide-correcting shoreline position time series returned by SDS_transects.compute_intersection
+    
+    Arguments:
+    -----------
+        cross_distance: dict
+            contains the intersection points of satellite-derived shorelines and user-defined transects
+        
+        tide: numpy array
+            timeseries of tidal elevations 
+        
+        zref: int
+            reference level of height datum - e.g. 0 m AHD
+        
+        beta: int
+            beach slope
+    
+    Returns:
+    ----------
+        cross_distance_tide_corrected: dict
+            contains the tide corrected shoreline-transect intersections
+    """
+    cross_distance_corrected = dict([])
+    #Check that length of tide time series is same as SDS timeseries
+    #Cross distance should have at least 1 transect
+    if len(cross_distance['1'])==len(tide):
+        #Cyclone through all transects
+        for key,transect in cross_distance.items():
+            transect_corrected = []               
+            for i,ztide in enumerate(tide):              
+               delX = (zref-ztide)/beta             
+               transect_corrected.append(transect[i]+delX)
+                
+            transect_corrected = np.array(transect_corrected)
+            cross_distance_corrected[key] = transect_corrected        
+    else:
+        print('ERROR - time series not same lenght!')
+
+    return cross_distance_corrected
+
+def process_tide_data(tide_file, output):
+    """
+    function for processing tide data before performing tidal correction. This code finds tide heights
+    at time that correspond to shoreline detections
+    
+    Arguments: 
+    ----------
+    output: dict
+        data from CoastSat analysis
+        
+    tide_file: full file path and name
+        filepath (including name) for tidal file to process. 
+        should be organized as [year month day hour min sec z]
+    
+    Returns:
+    ---------
+    tide: np.array
+        contains tide height at dates correponding to detected shorelines 
+    """
+    # import data from tide file
+    tideraw = pd.read_csv(tide_file, sep='\t')
+    tideraw = tideraw.values
+
+    #create tide_data dictionary    
+    tide_data = {'dates': [], 'tide': []}
+
+    for i,row in enumerate(tideraw):
+        #convert tide time to UTC from WA local time (UTC+8 hrs)
+        dumtime = datetime(int(row[0]), int(row[1]), int(row[2]), int(row[3]), int(row[4]), int(row[5]))
+        dumtime = datetime.timestamp(dumtime)
+        dumtime = datetime.fromtimestamp(dumtime,tz=timezone.utc)
+        tide_data['dates'].append(dumtime)
+        tide_data['tide'].append(row[-1])
+    
+    # extract tide heights corresponding to shoreline detections
+    tide = []
+    def find(item, lst):
+        start = 0
+        start = lst.index(item, start)
+        return start
+    
+    for i,date in enumerate(output['dates']):
+        print('\rCalculating tides: %d%%' % int((i+1)*100/len(output['dates'])), end='')
+        tide.append(tide_data['tide'][find(min(item for item in tide_data['dates'] if item > date), tide_data['dates'])])
+    
+    tide = np.array(tide)
+    
+    return tide
+
+        
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    

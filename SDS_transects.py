@@ -88,7 +88,10 @@ def draw_transects(output, settings):
     ax1.set_ylabel('Northings [m]')
     ax1.grid(linestyle=':', color='0.5')
     for i in range(len(output['shorelines'])):
-        sl = output['shorelines'][i]
+        if settings['check_detection_sand_poly']:
+            sl = output['sand_points'][i]
+        else:       
+            sl = output['shorelines'][i]
         date = output['dates'][i]
         ax1.plot(sl[:, 0], sl[:, 1], '.', markersize=3, label=date.strftime('%d-%m-%Y'))
 #    ax1.legend()
@@ -211,7 +214,12 @@ def compute_intersection(output, transects, settings):
             corrected.
         
     """      
-    shorelines = output['shorelines']
+    #use sand_points as shoreline when using sand_polygon, else use typical CoastSat shoreline
+    if settings['check_detection_sand_poly']:
+        shorelines = output['sand_points']
+    else:
+        shorelines = output['shorelines']
+    
     along_dist = settings['along_dist']
     
     # initialise variables
@@ -238,12 +246,23 @@ def compute_intersection(output, transects, settings):
             d_line = np.abs(np.cross(p2-p1,sl-p1)/np.linalg.norm(p2-p1))
             # calculate the distance between shoreline points and the origin of the transect
             d_origin = np.array([np.linalg.norm(sl[k,:] - p1) for k in range(len(sl))])
+            
+            #####################################################################################
+            # Modified KILIAN
             # find the shoreline points that are close to the transects and to the origin
             # the distance to the origin is hard-coded here to 1 km 
-            logic_close = np.logical_and(d_line <= along_dist, d_origin <= 1000)
-            idx_close = find_indices(logic_close, lambda e: e == True)
+            idx_close = np.logical_and(d_line <= along_dist, d_origin <= 1000)
+            # find the shoreline points that are in the direction of the transect (within 90 degrees)
+            temp_sl = sl - np.array(transects[key][0,:])
+            phi_sl = np.array([np.arctan2(temp_sl[k,1], temp_sl[k,0]) for k in range(len(temp_sl))])
+            diff_angle = (phi - phi_sl)
+            idx_oriented = np.abs(diff_angle) < np.pi/2
+            # combine the transects that are close in distance and close in orientation
+            idx_close = np.logical_and(idx_close,idx_oriented)
+            idx_close = find_indices(idx_close, lambda e: e == True)
             idx_points_all.append(idx_close)
-            
+            #####################################################################################
+                      
             # in case there are no shoreline points close to the transect 
             if not idx_close:
                 chainage_mtx[i,j,:] = np.tile(np.nan,(1,6))
