@@ -1,0 +1,3 @@
+filename	1989-06-14-01-30-12_L5_PORT_HEDLAND
+acc_georef	8.115
+epsg	32650

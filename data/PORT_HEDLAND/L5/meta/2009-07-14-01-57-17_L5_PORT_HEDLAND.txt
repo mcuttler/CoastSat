@@ -1,0 +1,3 @@
+filename	2009-07-14-01-57-17_L5_PORT_HEDLAND
+acc_georef	4.9
+epsg	32650

@@ -1,0 +1,3 @@
+filename	2010-04-05-01-53-11_L5_PORT_HEDLAND
+acc_georef	5.29
+epsg	32650

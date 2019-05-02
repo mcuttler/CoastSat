@@ -1,0 +1,3 @@
+filename	1992-09-10-01-24-27_L5_PORT_HEDLAND
+acc_georef	7.53
+epsg	32650

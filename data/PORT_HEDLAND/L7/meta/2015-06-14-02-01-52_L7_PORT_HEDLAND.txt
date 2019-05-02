@@ -1,0 +1,3 @@
+filename	2015-06-14-02-01-52_L7_PORT_HEDLAND_pan.tif
+acc_georef	4.489
+epsg	32650
