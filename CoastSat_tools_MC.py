@@ -28,6 +28,7 @@ def get_sat_data(polygons, im_dates, sat_list):
     import matplotlib.pyplot as plt
     import SDS_download, SDS_preprocess, SDS_shoreline, SDS_tools, SDS_transects
     
+    #add this as if/else statement to main.py
     for kml in polygons.values():
         # load modules
 
@@ -53,22 +54,6 @@ def get_sat_data(polygons, im_dates, sat_list):
         # retrieve satellite images from GEE
         metadata = SDS_download.retrieve_images(inputs)
         
-        #get rid of S2 images with bad georeferencing - acc_georef = -1
-        #acc_georef = []
-        #dates = []
-        #epsg = []
-        #filenames = []
-
-        #for i, acc in enumerate(metadata['S2']['acc_georef']):
-        #    if acc == 1:
-        #        acc_georef.append(metadata['S2']['acc_georef'][i])
-        #        dates.append(metadata['S2']['dates'][i])
-        #        epsg.append(metadata['S2']['epsg'][i])
-        #        filenames.append(metadata['S2']['filenames'][i])
-        
-        #metadata['S2'] = {'dates':dates, 'acc_georef':acc_georef, 'epsg':epsg, 'filenames': filenames }
-        #del acc_georef, dates, epsg, filenames, i, acc   
-      
         # settings for the shoreline extraction
         settings = { 
                 # general parameters:
@@ -126,7 +111,7 @@ def calc_island_transects(x,y,trans_length,heading,fig):
     x,y (input) as the origin for the transects and calculates transects of given length
     and heading (clockwise from North)
     
-    
+    Edit so that Transects is an output dictionary with key = transect number
     
     """
     import numpy as np
@@ -134,19 +119,20 @@ def calc_island_transects(x,y,trans_length,heading,fig):
     import matplotlib.pyplot as plt
     
     #create dictionary for output
-    Transects = {'StartXY':np.zeros([heading.size,2]),'EndXY':np.zeros([heading.size,2])}                                   
+    Transects = dict([])
+#    Transects = {'StartXY':np.zeros([heading.size,2]),'EndXY':np.zeros([heading.size,2])}                                   
     
     for i,j in enumerate(heading):
         
         #calculate x and y
-        xx = math.sin(math.radians(j))*trans_length
-        yy = math.cos(math.radians(j))*trans_length
+        xx = (math.sin(math.radians(j))*trans_length)+x
+        yy = (math.cos(math.radians(j))*trans_length)+y
         
-        Transects['StartXY'][i,:] = [x,y]
-        Transects['EndXY'][i,:] = [xx,yy]
+        Transects[i] = np.array([[x, y], [xx, yy]])
     
     if fig == 1:
-        fig = plt.figure()            
+        fig = plt.figure()
+                  
         plt.plot([Transects['StartXY'][:,0],Transects['EndXY'][:,0]],
                  [Transects['StartXY'][:,1],Transects['EndXY'][:,1]])
         plt.show
