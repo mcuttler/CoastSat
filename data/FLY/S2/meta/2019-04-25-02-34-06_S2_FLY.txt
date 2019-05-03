@@ -1,0 +1,3 @@
+filename	2019-04-25-02-34-06_S2_FLY_10m.tif
+acc_georef	-1
+epsg	32750
