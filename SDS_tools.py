@@ -479,6 +479,8 @@ def process_tide_data(tide_file, output):
     tide: np.array
         contains tide height at dates correponding to detected shorelines 
     """
+    output_corrected = dict([])
+    
     # import data from tide file
     tideraw = pd.read_csv(tide_file, sep='\t')
     tideraw = tideraw.values
@@ -495,7 +497,7 @@ def process_tide_data(tide_file, output):
         tide_data['tide'].append(row[-1])
     
     # extract tide heights corresponding to shoreline detections
-    tide = []
+    tide_out = []
     def find(item, lst):
         start = 0
         start = lst.index(item, start)
@@ -503,11 +505,12 @@ def process_tide_data(tide_file, output):
     
     for i,date in enumerate(output['dates']):
         print('\rCalculating tides: %d%%' % int((i+1)*100/len(output['dates'])), end='')
-        tide.append(tide_data['tide'][find(min(item for item in tide_data['dates'] if item > date), tide_data['dates'])])
-    
-    tide = np.array(tide)
+        tide_out.append(tide_data['tide'][find(min(item for item in tide_data['dates'] if item > date), tide_data['dates'])])
+          
+    tide_out = np.array(tide_out)
     #determine all values where no tidal data exists
-    tide_nanidx = np.argwhere(~np.isnan(tide))
+    tide_nanidx = np.argwhere(~np.isnan(tide_out))
+    
     
     #remove data from everywhere when no tidal data exists
     cloud_cover = []
@@ -521,6 +524,7 @@ def process_tide_data(tide_file, output):
     sand_points = []
     satname = []
     shorelines = []
+    tide = []
     
     for i,j in enumerate(tide_nanidx):                
         cloud_cover.append(output['cloud_cover'][int(tide_nanidx[i])])
@@ -534,6 +538,7 @@ def process_tide_data(tide_file, output):
         sand_points.append(output['sand_points'][int(tide_nanidx[i])])
         satname.append(output['satname'][int(tide_nanidx[i])])
         shorelines.append(output['shorelines'][int(tide_nanidx[i])])
+        tide.append(tide_out[int(tide_nanidx[i])])
     
     output_corrected = {'cloud_cover': cloud_cover, 
                         'dates': dates,
@@ -545,9 +550,10 @@ def process_tide_data(tide_file, output):
                         'sand_perimeter': sand_perimeter,
                         'sand_points': sand_points,
                         'satname': satname,
-                        'shorelines': shorelines}
+                        'shorelines': shorelines,
+                        'tide': tide}
     
-    return tide, output_corrected
+    return tide_out, output_corrected
 
 
 def tide_correct_sand_polygon(cross_distance_corrected, output_corrected, settings):
@@ -638,6 +644,20 @@ def tide_correct_sand_polygon(cross_distance_corrected, output_corrected, settin
     
     return output_corrected
         
+def read_island_info(island_file,settings):
+    """
+    To be filled
+    MC
+    
+    """
+    
+    island_info = pd.read_csv(island_file)
+    island_info = island_info.values
+    
+    settings['island_center'] = island_info[0,0:2]
+    settings['beach_slope'] = island_info[0,2]
+    
+    return settings 
     
     
     
