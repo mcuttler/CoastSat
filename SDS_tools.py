@@ -14,7 +14,7 @@ import pickle
 from datetime import tzinfo, timedelta, datetime, timezone
 
 # other modules
-from osgeo import gdal, ogr, osr
+from osgeo import gdal, osr
 import skimage.transform as transform
 import simplekml
 from scipy.ndimage.filters import uniform_filter
@@ -60,8 +60,7 @@ def convert_pix2world(points, georef):
         points_converted = tform(tmp)
         
     else:
-        print('invalid input type')
-        raise
+        raise Exception('invalid input type')
         
     return points_converted
 
@@ -145,8 +144,8 @@ def convert_epsg(points, epsg_in, epsg_out):
     elif type(points) is np.ndarray:
         points_converted = np.array(coordTransform.TransformPoints(points))  
     else:
-        print('invalid input type')
-        raise
+        raise Exception('invalid input type')
+
         
     return points_converted
 

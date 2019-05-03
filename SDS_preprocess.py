@@ -593,14 +593,14 @@ def save_jpg(metadata, settings):
             if cloud_cover > cloud_thresh or cloud_cover == 1:
                 continue
             # save .jpg with date and satellite in the title
-            date = filenames[i][:10]
+            date = filenames[i][:19]
             create_jpg(im_ms, cloud_mask, date, satname, filepath_jpg)
             
     # print the location where the images have been saved
     print('Satellite images saved as .jpg in ' + os.path.join(filepath_data, sitename,
                                                     'jpg_files', 'preprocessed'))
                 
-def get_reference_sl_manual(metadata, settings):
+def get_reference_sl(metadata, settings):
     """
     Allows the user to manually digitize a reference shoreline that is used seed the shoreline 
     detection algorithm. The reference shoreline helps to detect the outliers, making the shoreline
