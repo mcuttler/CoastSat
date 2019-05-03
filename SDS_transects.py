@@ -268,6 +268,8 @@ def compute_intersection(output, transects, settings):
     idx_points = []
     
     for i in range(len(shorelines)):
+        
+        print('\rCalculating intersections: %d%%' % int((i+1)*100/len(output['dates'])), end='')
 
         sl = shorelines[i]
         idx_points_all = []

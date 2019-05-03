@@ -511,24 +511,55 @@ def tide_correct_sand_polygon(cross_distance_corrected, output, settings, x, y) 
     MC - 2019
     
     """
-    #Create output dictionary
-    sand_points_corrected = dict([])
-    sand_points_temp = dict([])
+#Create output dictionary
+x= EvaCenter[0]
+y= EvaCenter[1]
+#Create output dictionary
+output_corrected = dict([])
+out = dict([])
+out['xout'] = np.ndarray((len(cross_distance_corrected['1']), len(cross_distance_corrected.keys())))
+out['yout'] = np.ndarray((len(cross_distance_corrected['1']), len(cross_distance_corrected.keys())))
     
-    #Calculate distance from origin to tide-corrected shoreline intersection
-    for i,transect in enumerate(cross_distance_corrected.keys()):
-        key = str(i+1)
-        xnew = []
-        ynew = []
+#Calculate distance from origin to tide-corrected shoreline intersection
+for i,transect in enumerate(cross_distance_corrected.keys()):
+    key = str(i+1)
+    cross_dist_corrected_coords_temp = []
         
-        for j,sl in enumerate(cross_distance_corrected[transect]):
-            dx = math.sin(math.radians(heading[i]))/sl
-            dy = math.cos(math.radians(heading[i]))/sl
-            
-            xnew.append(x+dx)
-            ynew.append(y+dy)
+    for j,sl in enumerate(cross_distance_corrected[transect]):
+        out['xout'][j,i] = x+(math.sin(math.radians(settings['heading'][i]))*sl)
         
-        sand_points_temp[key] = np.array([xnew, ynew])
+        out['yout'][j,i] = y+(math.cos(math.radians(settings['heading'][i]))*sl)
+        
+          
+#go through each row and create numpy array of corrected polygon points
+sand_points_corrected = []
+for i,j in enumerate(out['xout']):       
+    sand_points_corrected.append(np.array([out['xout'][i,:], out['yout'][i,:]]).T)
+    
+output_corrected['sand_points']=sand_points_corrected  
+
+#use corrected points to build a polygon and calculate centroid, perimeter and area
+from shapely.geometry import LineString, LinearRing, Polygon
+from shapely import ops
+
+#organize output 
+sand_area = []
+sand_perimeter = []
+sand_centroid = []
+sand_points_poly = []
+sand_perimeter = []
+
+for i, coords in enumerate(output_corrected['sand_points']):    
+    linear_ring = LinearRing(coordinates=coords)
+    sand_polygon = Polygon(shell=linear_ring, holes=None)
+    
+    sand_area = sand_polygon.area
+    sand_perimeter = sand_polygon.exterior.length
+    sand_centroid = np.array(sand_polygon.centroid.coords)
+    sand_points_poly = np.array(sand_polygon.exterior.coords)
+
+output_corrected['sand_area'] = sand_area
+output_corrected['sand_perimeter'] = sand_perimeter
         
         
     
