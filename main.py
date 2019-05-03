@@ -17,7 +17,7 @@
     import SDS_download, SDS_preprocess, SDS_tools, SDS_transects, SDS_shoreline
     
     # region of interest (longitude, latitude in WGS84), can be loaded from a .kml polygon
-    polygon = SDS_tools.coords_from_kml('EVA.kml')
+    polygon = SDS_tools.coords_from_kml('FLY.kml')
                 
     # date range
     dates = ['2013-01-01', '2019-05-01']
@@ -26,7 +26,7 @@
     sat_list = ['L8','S2']
     
     # name of the site
-    sitename = 'EVA'
+    sitename = 'FLY'
     
     # filepath where data will be stored
     filepath_data = os.path.join(os.getcwd(), 'data')
@@ -47,12 +47,12 @@
     #%% 2. Retrieve images
     
     # retrieve satellite images from GEE
-    #metadata = SDS_download.retrieve_images(inputs)
+    metadata = SDS_download.retrieve_images(inputs)
     
     # if you have already downloaded the images, just load the metadata file
-    filepath = os.path.join(inputs['filepath'], sitename)
-    with open(os.path.join(filepath, sitename + '_metadata' + '.pkl'), 'rb') as f:
-        metadata = pickle.load(f)
+#    filepath = os.path.join(inputs['filepath'], sitename)
+#    with open(os.path.join(filepath, sitename + '_metadata' + '.pkl'), 'rb') as f:
+#        metadata = pickle.load(f)
     
     ##################################################################################################
     # create a subset of the metadata for testing
@@ -183,9 +183,9 @@
     #%% 4. Shoreline analysis
     
     # if you have already mapped the shorelines, load the output.pkl file
-    filepath = os.path.join(inputs['filepath'], sitename)
-    with open(os.path.join(filepath, sitename + '_output' + '.pkl'), 'rb') as f:
-        output = pickle.load(f) 
+    #filepath = os.path.join(inputs['filepath'], sitename)
+    #with open(os.path.join(filepath, sitename + '_output' + '.pkl'), 'rb') as f:
+    #    output = pickle.load(f) 
     
     # now we have to define cross-shore transects over which to quantify the shoreline changes
     # each transect is defined by two points, its origin and a second point that defines its orientation
