@@ -440,9 +440,13 @@ def tide_correct(cross_distance, tide, zref, beta):
         #Cyclone through all transects
         for key,transect in cross_distance.items():
             transect_corrected = []               
-            for i,ztide in enumerate(tide):              
-               delX = (zref-ztide)/beta             
-               transect_corrected.append(transect[i]+delX)
+            for i,ztide in enumerate(tide):
+                #calculate horizontal correction, assume negative slope so that
+                #if reference datum is above tidal height, shoreline position is shifted
+                #landwards; if reference dateum is below tidal height, shoreline 
+                # position is shifted seawards                
+                delX = (zref-ztide)/-beta             
+                transect_corrected.append(transect[i]+delX)
                                
             transect_corrected = np.array(transect_corrected)
             cross_distance_corrected[key] = transect_corrected        
