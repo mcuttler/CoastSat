@@ -18,6 +18,8 @@ from osgeo import gdal, ogr, osr
 import skimage.transform as transform
 import simplekml
 from scipy.ndimage.filters import uniform_filter
+from shapely.geometry import LineString, LinearRing, Polygon
+from shapely import ops
 
 def convert_pix2world(points, georef):
     """
@@ -441,12 +443,15 @@ def tide_correct(cross_distance, tide, zref, beta):
         for key,transect in cross_distance.items():
             transect_corrected = []               
             for i,ztide in enumerate(tide):
-                #calculate horizontal correction, assume negative slope so that
-                #if reference datum is above tidal height, shoreline position is shifted
-                #landwards; if reference dateum is below tidal height, shoreline 
-                # position is shifted seawards                
-                delX = (zref-ztide)/-beta             
-                transect_corrected.append(transect[i]+delX)
+                if np.isnan(ztide):
+                    continue
+                else:
+                    #calculate horizontal correction, assume negative slope so that
+                    #if reference datum is above tidal height, shoreline position is shifted
+                    #landwards; if reference dateum is below tidal height, shoreline 
+                    # position is shifted seawards                
+                    delX = (zref-ztide)/-beta             
+                    transect_corrected.append(transect[i]+delX)
                                
             transect_corrected = np.array(transect_corrected)
             cross_distance_corrected[key] = transect_corrected        
@@ -501,66 +506,137 @@ def process_tide_data(tide_file, output):
         tide.append(tide_data['tide'][find(min(item for item in tide_data['dates'] if item > date), tide_data['dates'])])
     
     tide = np.array(tide)
+    #determine all values where no tidal data exists
+    tide_nanidx = np.argwhere(~np.isnan(tide))
     
-    return tide
+    #remove data from everywhere when no tidal data exists
+    cloud_cover = []
+    dates = []
+    filename = []
+    geoaccuracy = []
+    idx = []
+    sand_area = []
+    sand_centroid = []
+    sand_perimeter = []
+    sand_points = []
+    satname = []
+    shorelines = []
+    
+    for i,j in enumerate(tide_nanidx):                
+        cloud_cover.append(output['cloud_cover'][int(tide_nanidx[i])])
+        dates.append(output['dates'][int(tide_nanidx[i])])
+        filename.append(output['filename'][int(tide_nanidx[i])])
+        geoaccuracy.append(output['geoaccuracy'][int(tide_nanidx[i])])
+        idx.append(output['idx'][int(tide_nanidx[i])])
+        sand_area.append(output['sand_area'][int(tide_nanidx[i])])
+        sand_centroid.append(output['sand_centroid'][int(tide_nanidx[i])])
+        sand_perimeter.append(output['sand_perimeter'][int(tide_nanidx[i])])
+        sand_points.append(output['sand_points'][int(tide_nanidx[i])])
+        satname.append(output['satname'][int(tide_nanidx[i])])
+        shorelines.append(output['shorelines'][int(tide_nanidx[i])])
+    
+    output_corrected = {'cloud_cover': cloud_cover, 
+                        'dates': dates,
+                        'filename': filename, 
+                        'geoaccuracy': geoaccuracy,
+                        'idx': idx, 
+                        'sand_area': sand_area,
+                        'sand_centroid': sand_centroid,
+                        'sand_perimeter': sand_perimeter,
+                        'sand_points': sand_points,
+                        'satname': satname,
+                        'shorelines': shorelines}
+    
+    return tide, output_corrected
 
 
-def tide_correct_sand_polygon(cross_distance_corrected, output, settings, x, y)    :
+def tide_correct_sand_polygon(cross_distance_corrected, output_corrected, settings):
     """
     To be filled in 
     MC - 2019
     
     """
-#Create output dictionary
-x= EvaCenter[0]
-y= EvaCenter[1]
-#Create output dictionary
-output_corrected = dict([])
-out = dict([])
-out['xout'] = np.ndarray((len(cross_distance_corrected['1']), len(cross_distance_corrected.keys())))
-out['yout'] = np.ndarray((len(cross_distance_corrected['1']), len(cross_distance_corrected.keys())))
+    #temporary dummy output variable 
+    out = dict([])
+    out['xout'] = np.ndarray((len(cross_distance_corrected['1']), len(cross_distance_corrected.keys())))
+    out['yout'] = np.ndarray((len(cross_distance_corrected['1']), len(cross_distance_corrected.keys())))
     
-#Calculate distance from origin to tide-corrected shoreline intersection
-for i,transect in enumerate(cross_distance_corrected.keys()):
-    key = str(i+1)
-    cross_dist_corrected_coords_temp = []
+    #Calculate distance from origin to tide-corrected shoreline intersection
+    x = settings['island_center'][0]
+    y = settings['island_center'][1]
+    
+    for i,transect in enumerate(cross_distance_corrected.keys()):
+        key = str(i+1)
+        cross_dist_corrected_coords_temp = []
         
-    for j,sl in enumerate(cross_distance_corrected[transect]):
-        out['xout'][j,i] = x+(math.sin(math.radians(settings['heading'][i]))*sl)
+        for j,sl in enumerate(cross_distance_corrected[transect]):
+            out['xout'][j,i] = x+(math.sin(math.radians(settings['heading'][i]))*sl)
         
-        out['yout'][j,i] = y+(math.cos(math.radians(settings['heading'][i]))*sl)
+            out['yout'][j,i] = y+(math.cos(math.radians(settings['heading'][i]))*sl)
         
           
-#go through each row and create numpy array of corrected polygon points
-sand_points_corrected = []
-for i,j in enumerate(out['xout']):       
-    sand_points_corrected.append(np.array([out['xout'][i,:], out['yout'][i,:]]).T)
+    #go through each row and create numpy array of corrected polygon points
+    sand_points_corrected = []
+    for i,j in enumerate(out['xout']):       
+        sand_points_corrected.append(np.array([out['xout'][i,:], out['yout'][i,:]]).T)
     
-output_corrected['sand_points']=sand_points_corrected  
+    output_corrected['sand_points_corrected']=sand_points_corrected  
 
-#use corrected points to build a polygon and calculate centroid, perimeter and area
-from shapely.geometry import LineString, LinearRing, Polygon
-from shapely import ops
-
-#organize output 
-sand_area = []
-sand_perimeter = []
-sand_centroid = []
-sand_points_poly = []
-sand_perimeter = []
-
-for i, coords in enumerate(output_corrected['sand_points']):    
-    linear_ring = LinearRing(coordinates=coords)
-    sand_polygon = Polygon(shell=linear_ring, holes=None)
-    
-    sand_area = sand_polygon.area
-    sand_perimeter = sand_polygon.exterior.length
-    sand_centroid = np.array(sand_polygon.centroid.coords)
-    sand_points_poly = np.array(sand_polygon.exterior.coords)
-
-output_corrected['sand_area'] = sand_area
-output_corrected['sand_perimeter'] = sand_perimeter
+    #use corrected points to build a polygon and calculate centroid, perimeter and area
+    #organize output 
+    output_sand_area = []
+    output_sand_perimeter = []
+    output_sand_centroid = []
+    output_sand_points_poly = []
+ 
+    for i, coords in enumerate(output_corrected['sand_points_corrected']):
         
+        linear_ring = LinearRing(coordinates=coords)
+        sand_polygon = Polygon(shell=linear_ring, holes=None)
+    
+        output_sand_area.append(sand_polygon.area)
+        output_sand_perimeter.append(sand_polygon.exterior.length)
+        output_sand_centroid.append(np.array(sand_polygon.centroid.coords))
+        output_sand_points_poly.append(np.array(sand_polygon.exterior.coords))
+    
+    output_corrected['sand_area_corrected'] = output_sand_area
+    output_corrected['sand_perimeter_corrected'] = output_sand_perimeter
+    output_corrected['sand_centroid_corrected']= output_sand_centroid
+    output_corrected['sand_points_poly_corrected']= output_sand_points_poly
+    
+     # save outputput structure as output.pkl
+    sitename = settings['inputs']['sitename']
+    filepath_data = settings['inputs']['filepath']
+    filepath = os.path.join(filepath_data, sitename)
+    with open(os.path.join(filepath, sitename + '_output_tide_corrected.pkl'), 'wb') as f:
+        pickle.dump(output_corrected, f)
+        
+    # save output shorelines as kml for GIS applications
+#    kml = simplekml.Kml()
+#    for i in range(len(output['shorelines'])):
+#        if len(output['shorelines'][i]) == 0:
+#            continue
+#        sl = output['shorelines'][i]
+#        date = output['dates'][i]
+#        newline = kml.newlinestring(name= date.strftime('%Y-%m-%d %H:%M:%S'))
+#        newline.coords = sl
+#        newline.description = satname + ' shoreline' + '\n' + 'acquired at ' + date.strftime('%H:%M:%S') + ' UTC'
+#    kml.save(os.path.join(filepath, sitename + '_output.kml'))  
+#    
+    # save sand polygons as kml
+    kml = simplekml.Kml()
+    for i in range(len(output_corrected['sand_points_corrected'])):
+        if len(output_corrected['sand_points_corrected'][i]) == 0:
+            continue
+        sl = output_corrected['sand_points_corrected'][i]
+        date = output_corrected['dates'][i]
+        satname = output_corrected['satname'][i]
+        newline = kml.newpolygon(name=date.strftime('%Y-%m-%d %H:%M:%S'), outerboundaryis=sl)
+        newline.description = satname + ' shoreline' + '\n' + 'acquired at ' + date.strftime('%H:%M:%S') + ' UTC'
+        
+    kml.save(os.path.join(filepath, sitename + '_sand_polygons_tide_corrected.kml')) 
+    
+    return output_corrected
         
     
     

@@ -191,7 +191,7 @@ def load_transects_from_kml(filename):
 
     return transects
 
-def calc_island_transects(x,y,settings):
+def calc_island_transects(settings):
     """ 
     This code is for calculating transecs radiating from a single point. It uses the 
     x,y (input) as the origin for the transects and calculates transects of given length
@@ -219,6 +219,8 @@ def calc_island_transects(x,y,settings):
     """   
     #create dictionary for output
     transects = dict([])
+    x = settings['island_center'][0]
+    y = settings['island_center'][1]
                                      
     for i,j in enumerate(settings['heading']):
         
