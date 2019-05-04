@@ -842,35 +842,6 @@ def extract_shorelines(metadata, settings):
             sand_centroid = np.array(sand_polygon.centroid.coords)
             sand_points = np.array(sand_polygon.exterior.coords)
             
-#################################################################################
-                    #DELETE THIS SECTION
-#################################################################################                          
-            # make a figure for quality control - moved to show_detection_sand_polygon, to be deleted
-#            fig = plt.figure()
-#            ax0 = fig.add_subplot(131)
-#            ax0.axis('off')
-#            im_RGB = SDS_preprocess.rescale_image_intensity(im_ms[:,:,[2,1,0]], cloud_mask, 99.9)
-#            ax0.imshow(im_RGB)
-#            ax0.set_title('RGB', fontweight='bold')
-#            ax1 = fig.add_subplot(132, sharex=ax0, sharey=ax0)
-#            ax1.axis('off')
-#            ax1.imshow(im_binary_sand,cmap='gray')
-#            ax1.set_title('sand pixels', fontweight='bold')
-#            ax2 = fig.add_subplot(133, sharex=ax0, sharey=ax0)
-#            ax2.axis('off')
-#            ax2.imshow(im_binary_sand_closed, cmap='gray')
-#            ax2.set_title('sand polygon', fontweight='bold')
-#            for k in range(len(sand_contours)):
-#                ax2.plot(sand_contours[k][:,1], sand_contours[k][:,0], 'r-', linewidth=2.5)
-#                ax1.plot(sand_contours[k][:,1], sand_contours[k][:,0], 'r-', linewidth=2.5)
-#                ax0.plot(sand_contours[k][:,1], sand_contours[k][:,0], 'k--', linewidth=1.5)
-#            fig.set_size_inches([19,10])
-#            fig.set_tight_layout(True)
-#            fig.savefig(os.path.join(settings['inputs']['filepath'],
-#                    sitename, 'jpg_files', 'sand_polygons',
-#                    filenames[i][:18] + '_' + satname + '_' + sitename + '.jpg'))
-######################################################################################
-
             #######################################################################################
             ####################################################################################### 
             
@@ -941,6 +912,12 @@ def extract_shorelines(metadata, settings):
             output_cloudcover.append(cloud_cover)
             output_geoaccuracy.append(metadata[satname]['acc_georef'][i])
             output_idxkeep.append(i)
+            # sand fields
+            output_sand_area.append(sand_area)
+            output_sand_perimeter.append(sand_perimeter)
+            output_sand_centroid.append(sand_centroid)
+            output_sand_points.append(sand_points)
+            
         # create dictionnary of output
         output[satname] = {
                 'dates': output_timestamp,
