@@ -17,7 +17,7 @@
     import SDS_download, SDS_preprocess, SDS_tools, SDS_transects, SDS_shoreline
     
     # region of interest (longitude, latitude in WGS84), can be loaded from a .kml polygon
-    polygon = SDS_tools.coords_from_kml('FLY.kml')
+    polygon = SDS_tools.coords_from_kml('EVA.kml')
                 
     # date range
     dates = ['2013-01-01', '2019-05-01']
@@ -26,7 +26,7 @@
     sat_list = ['L8','S2']
     
     # name of the site
-    sitename = 'FLY'
+    sitename = 'EVA'
     
     # filepath where data will be stored
     filepath_data = os.path.join(os.getcwd(), 'data')
@@ -95,12 +95,12 @@
     #SDS_preprocess.save_jpg(metadata, settings)
     
     ## [OPTIONAL] create a reference shoreline (helps to identify outliers and false detections); required if using sand_polygon
-    settings['reference_shoreline'] = SDS_preprocess.get_reference_sl(metadata, settings)
-    ### set the max distance (in meters) allowed from the reference shoreline for a detected shoreline to be valid
-    settings['max_dist_ref'] = 100        
-    ##
-    ### extract shorelines from all images (also saves output.pkl and shorelines.kml)
-    output = SDS_shoreline.extract_shorelines(metadata, settings)
+#    settings['reference_shoreline'] = SDS_preprocess.get_reference_sl(metadata, settings)
+#    ### set the max distance (in meters) allowed from the reference shoreline for a detected shoreline to be valid
+#    settings['max_dist_ref'] = 100        
+#    ##
+#    ### extract shorelines from all images (also saves output.pkl and shorelines.kml)
+#    output = SDS_shoreline.extract_shorelines(metadata, settings)
 #    
     #plot time series of beach area
     #fig = plt.figure()
@@ -184,9 +184,9 @@
     #%% 4. Shoreline analysis
     
     # if you have already mapped the shorelines, load the output.pkl file
-#    filepath = os.path.join(inputs['filepath'], sitename)
-#    with open(os.path.join(filepath, sitename + '_output' + '.pkl'), 'rb') as f:
-#        output = pickle.load(f) 
+    filepath = os.path.join(inputs['filepath'], sitename)
+    with open(os.path.join(filepath, sitename + '_output_tide_corrected' + '.pkl'), 'rb') as f:
+        output_corrected = pickle.load(f) 
     
     # now we have to define cross-shore transects over which to quantify the shoreline changes
     # each transect is defined by two points, its origin and a second point that defines its orientation
