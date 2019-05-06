@@ -17,49 +17,6 @@ for i,island in enumerate(islands):
     filepath = os.path.join(filepath_data, island)
     with open(os.path.join(filepath, island + '_output_tide_corrected' + '.pkl'), 'rb') as f:
         all_islands[island] = pickle.load(f)
-
-#%% plot figure comparing island area change
-import matplotlib.pyplot as plt
-
-plt.figure()
-c = ['b','r','g','y','k','c']
-for i,island in enumerate(all_islands):
-    plt.plot(all_islands[island]['dates'],all_islands[island]['sand_area_corrected'],c[i]+'-')
-    
-plt.grid()
-plt.legend(islands)
-
-plt.xlabel('Date')
-plt.ylabel('Tide-corrected island area (m^2)')
-
-plt.savefig('E:\Dropbox\Pilbara Island Remote Sensing\CoastSAT\Figures\All_islands_area_tide_corrected.png')
-
-#%% plot only S2 data
-
-plt.figure()
-c = ['b','r','g','y','k','c']
-for i,island in enumerate(all_islands):
-    #create plotting variables based on satellite
-    dates = []
-    sand_area = []
-    for j,sat in enumerate(all_islands[island]['satname']):      
-        if sat=='S2':
-            dates.append(all_islands[island]['dates'][j])
-            sand_area.append(all_islands[island]['sand_area_corrected'][j])
-        else:
-            continue
-    plt.plot(dates, sand_area,c[i]+'-')
-    
-plt.grid()
-plt.legend(islands)
-
-plt.xlabel('Date')
-plt.ylabel('Tide-corrected island area (m^2)')
-
-plt.savefig('E:\Dropbox\Pilbara Island Remote Sensing\CoastSAT\Figures\All_islands_area_S2_tide_corrected.png')
-
-
-#%% 
 #Isolate S2 and save new output 
 output_S2 = dict([])
 for i,island in enumerate(all_islands):
@@ -123,5 +80,56 @@ for i,island in enumerate(all_islands):
     
 with open(os.path.join(filepath_data, 'PilbaraIslands_output_S2' + '.pkl'), 'wb') as f:
     pickle.dump(output_S2,f)
+
+
+#%% plot figure comparing island area change
+    
+import os
+import pickle
+import matplotlib.pyplot as plt
+import math
+
+with open('P:\CUTTLER_CoastSat\CoastSat\data\PilbaraIslands_output_S2.pkl', 'rb') as f: 
+    all_islands = pickle.load(f)
+
+
+islands = ['EVA','FLY','OBSERVATION','ASHBURTON','LOCKER','Y']
+c = ['b','r','g','y','k','c']
+for i,island in enumerate(all_islands):
+    plt.figure()
+    plt.plot(all_islands[island]['dates'],all_islands[island]['sand_area_corrected'],c[i]+'.-')
+    plt.grid()
+    plt.title(islands[i])   
+    plt.xlabel('Date')
+    plt.ylabel('Tide-corrected island area (m^2)')
+
+#plt.savefig('E:\Dropbox\Pilbara Island Remote Sensing\CoastSAT\Figures\All_islands_area_tide_corrected.png')
+
+#%% plot only S2 data
+
+plt.figure()
+c = ['b','r','g','y','k','c']
+for i,island in enumerate(all_islands):
+    #create plotting variables based on satellite
+    dates = []
+    sand_area = []
+    for j,sat in enumerate(all_islands[island]['satname']):      
+        if sat=='S2':
+            dates.append(all_islands[island]['dates'][j])
+            sand_area.append(all_islands[island]['sand_area_corrected'][j])
+        else:
+            continue
+    plt.plot(dates, sand_area,c[i]+'-')
+    
+plt.grid()
+plt.legend(islands)
+
+plt.xlabel('Date')
+plt.ylabel('Tide-corrected island area (m^2)')
+
+plt.savefig('E:\Dropbox\Pilbara Island Remote Sensing\CoastSAT\Figures\All_islands_area_S2_tide_corrected.png')
+
+
+#%% 
 
 
