@@ -641,6 +641,12 @@ def tide_correct_sand_polygon(cross_distance_corrected, output_corrected, settin
         
     kml.save(os.path.join(filepath, sitename + '_sand_polygons_tide_corrected.kml')) 
     
+    #export output data to csv file  
+    csv_path = os.path.join(filepath,sitename + '_sand_polygons_tide_corrected.csv')
+    data_out = pd.DataFrome.from_dict(output_corrected)
+    
+    data_out.to_csv(csv_path)
+    
     return output_corrected
         
 def read_island_info(island_file,settings):
@@ -658,6 +664,8 @@ def read_island_info(island_file,settings):
     
     return settings 
     
+   
+
     
     
     
