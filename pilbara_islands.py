@@ -85,11 +85,12 @@ May 2019
 #%% Write all output to CSV files for further processing
 import os
 import pandas as pd
+import pickle
 
 with open('P:\CUTTLER_CoastSat\CoastSat\data\PilbaraIslands_output_S2.pkl', 'rb') as f: 
     all_islands = pickle.load(f)
     
-filepath = 'E:\Dropbox\Pilbara Island Remote Sensing\CoastSAT\data'
+filepath = 'P:\CUTTLER_CoastSat\CoastSat\data'
 
 for i,island in enumerate(all_islands):    
     csv_path = os.path.join(filepath,island, island + '_S2_tide_corrected.csv')    
