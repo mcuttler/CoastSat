@@ -6,18 +6,20 @@ M Cuttler
 May 2019
 """
 #%% import all islands tide_corrected data
-#import os
-#import pickle
-#
-#islands = ['EVA','FLY','OBSERVATION','ASHBURTON','LOCKER','Y']
-#filepath_data = os.path.join(os.getcwd(), 'data')
-#
-#all_islands = dict([])
-#for i,island in enumerate(islands):
-##    print(island)
-#    filepath = os.path.join(filepath_data, island)
-#    with open(os.path.join(filepath, island + '_output_tide_corrected' + '.pkl'), 'rb') as f:
-#        all_islands[island] = pickle.load(f)
+import os
+import pickle
+import matplotlib.pyplot as plt
+
+islands = ['EVA','FLY','OBSERVATION','ASHBURTON','LOCKER','Y']
+filepath_data = os.path.join(os.getcwd(), 'data')
+
+all_islands = dict([])
+for i,island in enumerate(islands):
+#    print(island)
+    filepath = os.path.join(filepath_data, island)
+    with open(os.path.join(filepath, island + '_output_tide_corrected' + '.pkl'), 'rb') as f:
+        all_islands[island] = pickle.load(f)
+        
 ##Isolate S2 and save new output 
 #output_S2 = dict([])
 #for i,island in enumerate(all_islands):
@@ -105,7 +107,7 @@ import matplotlib.pyplot as plt
 import math
 
 with open('P:\CUTTLER_CoastSat\CoastSat\data\PilbaraIslands_output_S2.pkl', 'rb') as f: 
-    all_islands = pickle.load(f)
+    all_islands_S2 = pickle.load(f)
 
 
 islands = ['EVA','FLY','OBSERVATION','ASHBURTON','LOCKER','Y']
@@ -118,7 +120,18 @@ for i,island in enumerate(all_islands):
     plt.xlabel('Date')
     plt.ylabel('Tide-corrected island area (m^2)')
 
-#%% get rid of points +/- 1 standard deviation from average area 
+#%% plot comparison of islands using L8 and S2 imagery
+
+for i,island in enumerate(all_islands):
+    fig = plt.figure()
+    plt.plot(all_islands[island]['dates'], all_islands[island]['sand_area_corrected'],'b',label = 'L8+S2')
+    plt.plot(all_islands_S2[island]['dates'], all_islands_S2[island]['sand_area_corrected'],'r',label = 'S2 only')
+    plt.legend()
+    plt.title(island)
+    fig.set_size_inches([8,  4])
+    figpath = 'E:\Dropbox\Pilbara Island Remote Sensing\CoastSAT\Figures\L8vS2'
+    figpath = os.path.join(figpath, island + '_L8vS2.png')
+    plt.savefig(
 
     
     
