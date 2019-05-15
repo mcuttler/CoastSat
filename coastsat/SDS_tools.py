@@ -10,10 +10,13 @@ import matplotlib.pyplot as plt
 import pdb
 
 # other modules
-from osgeo import gdal, ogr, osr
+from osgeo import gdal, osr
 import skimage.transform as transform
-import simplekml
 from scipy.ndimage.filters import uniform_filter
+
+###################################################################################################
+# COORDINATES CONVERSION FUNCTIONS
+###################################################################################################
 
 def convert_pix2world(points, georef):
     """
@@ -54,8 +57,7 @@ def convert_pix2world(points, georef):
         points_converted = tform(tmp)
         
     else:
-        print('invalid input type')
-        raise
+        raise Exception('invalid input type')
         
     return points_converted
 
@@ -139,169 +141,48 @@ def convert_epsg(points, epsg_in, epsg_out):
     elif type(points) is np.ndarray:
         points_converted = np.array(coordTransform.TransformPoints(points))  
     else:
-        print('invalid input type')
-        raise
+        raise Exception('invalid input type')
+
         
     return points_converted
 
-def coords_from_kml(fn):
-    """
-    Extracts coordinates from a .kml file.
+###################################################################################################
+# IMAGE ANALYSIS FUNCTIONS
+###################################################################################################
     
+def nd_index(im1, im2, cloud_mask):
+    """
+    Computes normalised difference index on 2 images (2D), given a cloud mask (2D).
+
     KV WRL 2018
 
     Arguments:
     -----------
-    fn: str
-        filepath + filename of the kml file to be read          
-                
+        im1, im2: np.array
+            Images (2D) with which to calculate the ND index
+        cloud_mask: np.array
+            2D cloud mask with True where cloud pixels are
+
     Returns:    -----------
-        polygon: list
-            coordinates extracted from the .kml file
-        
-    """    
-    
-    # read .kml file
-    with open(fn) as kmlFile:
-        doc = kmlFile.read() 
-    # parse to find coordinates field
-    str1 = '<coordinates>'
-    str2 = '</coordinates>'
-    subdoc = doc[doc.find(str1)+len(str1):doc.find(str2)]
-    coordlist = subdoc.split('\n')
-    # read coordinates
-    polygon = []
-    for i in range(1,len(coordlist)-1):
-        polygon.append([float(coordlist[i].split(',')[0]), float(coordlist[i].split(',')[1])])
-        
-    return [polygon]
-
-def save_kml(coords, epsg):
+        im_nd: np.array
+            Image (2D) containing the ND index
     """
-    Saves coordinates with specified spatial reference system into a .kml file in WGS84. 
-    
-    KV WRL 2018
 
-    Arguments:
-    -----------
-    coords: np.array
-        coordinates (2 columns) to be converted into a .kml file        
-                
-    Returns:    
-    -----------
-    Saves 'coords.kml' in the current folder.
-        
-    """     
-    
-    kml = simplekml.Kml()
-    coords_wgs84 = convert_epsg(coords, epsg, 4326)
-    kml.newlinestring(name='coords', coords=coords_wgs84)
-    kml.save('coords.kml')
-    
-def get_filepath(inputs,satname):
-    """
-    Create filepath to the different folders containing the satellite images.
-    
-    KV WRL 2018
+    # reshape the cloud mask
+    vec_mask = cloud_mask.reshape(im1.shape[0] * im1.shape[1])
+    # initialise with NaNs
+    vec_nd = np.ones(len(vec_mask)) * np.nan
+    # reshape the two images
+    vec1 = im1.reshape(im1.shape[0] * im1.shape[1])
+    vec2 = im2.reshape(im2.shape[0] * im2.shape[1])
+    # compute the normalised difference index
+    temp = np.divide(vec1[~vec_mask] - vec2[~vec_mask],
+                     vec1[~vec_mask] + vec2[~vec_mask])
+    vec_nd[~vec_mask] = temp
+    # reshape into image
+    im_nd = vec_nd.reshape(im1.shape[0], im1.shape[1])
 
-    Arguments:
-    -----------
-        inputs: dict 
-            dictionnary that contains the following fields:
-        'sitename': str
-            String containig the name of the site
-        'polygon': list
-            polygon containing the lon/lat coordinates to be extracted
-            longitudes in the first column and latitudes in the second column
-        'dates': list of str
-            list that contains 2 strings with the initial and final dates in format 'yyyy-mm-dd'
-            e.g. ['1987-01-01', '2018-01-01']
-        'sat_list': list of str
-            list that contains the names of the satellite missions to include 
-            e.g. ['L5', 'L7', 'L8', 'S2']
-        satname: str
-            short name of the satellite mission
-                
-    Returns:    
-    -----------
-        filepath: str or list of str
-            contains the filepath(s) to the folder(s) containing the satellite images
-        
-    """     
-    
-    sitename = inputs['sitename']
-    # access the images
-    if satname == 'L5':
-        # access downloaded Landsat 5 images
-        filepath = os.path.join(os.getcwd(), 'data', sitename, satname, '30m')
-    elif satname == 'L7':
-        # access downloaded Landsat 7 images
-        filepath_pan = os.path.join(os.getcwd(), 'data', sitename, 'L7', 'pan')
-        filepath_ms = os.path.join(os.getcwd(), 'data', sitename, 'L7', 'ms')
-        filenames_pan = os.listdir(filepath_pan)
-        filenames_ms = os.listdir(filepath_ms)
-        if (not len(filenames_pan) == len(filenames_ms)):
-            raise 'error: not the same amount of files for pan and ms'
-        filepath = [filepath_pan, filepath_ms]
-    elif satname == 'L8':
-        # access downloaded Landsat 8 images
-        filepath_pan = os.path.join(os.getcwd(), 'data', sitename, 'L8', 'pan')
-        filepath_ms = os.path.join(os.getcwd(), 'data', sitename, 'L8', 'ms')
-        filenames_pan = os.listdir(filepath_pan)
-        filenames_ms = os.listdir(filepath_ms)
-        if (not len(filenames_pan) == len(filenames_ms)):
-            raise 'error: not the same amount of files for pan and ms'
-        filepath = [filepath_pan, filepath_ms]
-    elif satname == 'S2':
-        # access downloaded Sentinel 2 images
-        filepath10 = os.path.join(os.getcwd(), 'data', sitename, satname, '10m')
-        filenames10 = os.listdir(filepath10)
-        filepath20 = os.path.join(os.getcwd(), 'data', sitename, satname, '20m')
-        filenames20 = os.listdir(filepath20)
-        filepath60 = os.path.join(os.getcwd(), 'data', sitename, satname, '60m')
-        filenames60 = os.listdir(filepath60)
-        if (not len(filenames10) == len(filenames20)) or (not len(filenames20) == len(filenames60)):
-            raise 'error: not the same amount of files for 10, 20 and 60 m bands'
-        filepath = [filepath10, filepath20, filepath60]
-            
-    return filepath
-    
-def get_filenames(filename, filepath, satname):
-    """
-    Creates filepath + filename for all the bands belonging to the same image.
-    
-    KV WRL 2018
-
-    Arguments:
-    -----------
-        filename: str
-            name of the downloaded satellite image as found in the metadata
-        filepath: str or list of str
-            contains the filepath(s) to the folder(s) containing the satellite images
-        satname: str
-            short name of the satellite mission       
-        
-    Returns:    
-    -----------
-        fn: str or list of str
-            contains the filepath + filenames to access the satellite image
-        
-    """     
-    
-    if satname == 'L5':
-        fn = os.path.join(filepath, filename)
-    if satname == 'L7' or satname == 'L8':
-        filename_ms = filename.replace('pan','ms')
-        fn = [os.path.join(filepath[0], filename),
-              os.path.join(filepath[1], filename_ms)]
-    if satname == 'S2':
-        filename20 = filename.replace('10m','20m')
-        filename60 = filename.replace('10m','60m')
-        fn = [os.path.join(filepath[0], filename),
-              os.path.join(filepath[1], filename20),
-              os.path.join(filepath[2], filename60)]
-        
-    return fn
+    return im_nd
     
 def image_std(image, radius):
     """
@@ -367,7 +248,105 @@ def mask_raster(fn, mask):
         out_band.WriteArray(out_data)
     # close dataset and flush cache
     raster = None
+
+
+###################################################################################################
+# UTILITIES
+###################################################################################################
     
+def get_filepath(inputs,satname):
+    """
+    Create filepath to the different folders containing the satellite images.
+    
+    KV WRL 2018
+
+    Arguments:
+    -----------
+        inputs: dict 
+            dictionnary that contains the following fields:
+        'sitename': str
+            String containig the name of the site
+        'polygon': list
+            polygon containing the lon/lat coordinates to be extracted
+            longitudes in the first column and latitudes in the second column
+        'dates': list of str
+            list that contains 2 strings with the initial and final dates in format 'yyyy-mm-dd'
+            e.g. ['1987-01-01', '2018-01-01']
+        'sat_list': list of str
+            list that contains the names of the satellite missions to include 
+            e.g. ['L5', 'L7', 'L8', 'S2']
+        satname: str
+            short name of the satellite mission
+                
+    Returns:    
+    -----------
+        filepath: str or list of str
+            contains the filepath(s) to the folder(s) containing the satellite images
+        
+    """     
+    
+    sitename = inputs['sitename']
+    filepath_data = inputs['filepath']
+    # access the images
+    if satname == 'L5':
+        # access downloaded Landsat 5 images
+        filepath = os.path.join(filepath_data, sitename, satname, '30m')
+    elif satname == 'L7':
+        # access downloaded Landsat 7 images
+        filepath_pan = os.path.join(filepath_data, sitename, 'L7', 'pan')
+        filepath_ms = os.path.join(filepath_data, sitename, 'L7', 'ms')
+        filepath = [filepath_pan, filepath_ms]
+    elif satname == 'L8':
+        # access downloaded Landsat 8 images
+        filepath_pan = os.path.join(filepath_data, sitename, 'L8', 'pan')
+        filepath_ms = os.path.join(filepath_data, sitename, 'L8', 'ms')
+        filepath = [filepath_pan, filepath_ms]
+    elif satname == 'S2':
+        # access downloaded Sentinel 2 images
+        filepath10 = os.path.join(filepath_data, sitename, satname, '10m')
+        filepath20 = os.path.join(filepath_data, sitename, satname, '20m')
+        filepath60 = os.path.join(filepath_data, sitename, satname, '60m')
+        filepath = [filepath10, filepath20, filepath60]
+            
+    return filepath
+    
+def get_filenames(filename, filepath, satname):
+    """
+    Creates filepath + filename for all the bands belonging to the same image.
+    
+    KV WRL 2018
+
+    Arguments:
+    -----------
+        filename: str
+            name of the downloaded satellite image as found in the metadata
+        filepath: str or list of str
+            contains the filepath(s) to the folder(s) containing the satellite images
+        satname: str
+            short name of the satellite mission       
+        
+    Returns:    
+    -----------
+        fn: str or list of str
+            contains the filepath + filenames to access the satellite image
+        
+    """     
+    
+    if satname == 'L5':
+        fn = os.path.join(filepath, filename)
+    if satname == 'L7' or satname == 'L8':
+        filename_ms = filename.replace('pan','ms')
+        fn = [os.path.join(filepath[0], filename),
+              os.path.join(filepath[1], filename_ms)]
+    if satname == 'S2':
+        filename20 = filename.replace('10m','20m')
+        filename60 = filename.replace('10m','60m')
+        fn = [os.path.join(filepath[0], filename),
+              os.path.join(filepath[1], filename20),
+              os.path.join(filepath[2], filename60)]
+        
+    return fn
+
 def merge_output(output):
     """
     Function to merge the output dictionnary, which has one key per satellite mission into a 
@@ -376,32 +355,63 @@ def merge_output(output):
     Arguments:
     -----------
         output: dict
-            contains the extracted shorelines and corresponding dates.
+            contains the extracted shorelines and corresponding dates, organised by satellite mission
         
     Returns:    
     -----------
-        output_all_sorted: dict
-            contains the extracted shorelines sorted by date in a single list
+        output_all: dict
+            contains the extracted shorelines in a single list sorted by date
         
     """     
-    output_all = {'dates':[], 'shorelines':[], 'geoaccuracy':[], 'satname':[], 'image_filename':[]}
-    for satname in list(output.keys()):
-        if satname == 'meta':
-            continue
-        output_all['dates'] = output_all['dates'] + output[satname]['timestamp']
-        output_all['shorelines'] = output_all['shorelines'] + output[satname]['shoreline']
-        output_all['geoaccuracy'] = output_all['geoaccuracy'] + output[satname]['geoaccuracy']
-        output_all['satname'] = output_all['satname'] + [_ for _ in np.tile(satname,
-                  len(output[satname]['timestamp']))]
-        output_all['image_filename'] = output_all['image_filename'] + output[satname]['filename']
     
+    # initialize output dict
+    output_all = dict([])
+    satnames = list(output.keys())
+    for key in output[satnames[0]].keys():
+        output_all[key] = []
+    # create extra key for the satellite name
+    output_all['satname'] = []
+    # fill the output dict
+    for satname in list(output.keys()):
+        for key in output[satnames[0]].keys():
+            output_all[key] = output_all[key] + output[satname][key]
+        output_all['satname'] = output_all['satname'] + [_ for _ in np.tile(satname,
+                  len(output[satname]['dates']))]
     # sort chronologically
-    output_all_sorted = {'dates':[], 'shorelines':[], 'geoaccuracy':[], 'satname':[], 'image_filename':[]}
     idx_sorted = sorted(range(len(output_all['dates'])), key=output_all['dates'].__getitem__)
-    output_all_sorted['dates'] = [output_all['dates'][i] for i in idx_sorted]
-    output_all_sorted['shorelines'] = [output_all['shorelines'][i] for i in idx_sorted]
-    output_all_sorted['geoaccuracy'] = [output_all['geoaccuracy'][i] for i in idx_sorted]
-    output_all_sorted['satname'] = [output_all['satname'][i] for i in idx_sorted]
-    output_all_sorted['image_filename'] = [output_all['image_filename'][i] for i in idx_sorted]
+    for key in output_all.keys():
+        output_all[key] = [output_all[key][i] for i in idx_sorted]
 
-    return output_all_sorted
+    return output_all
+
+def polygon_from_kml(fn):
+    """
+    Extracts coordinates from a .kml file.
+    
+    KV WRL 2018
+
+    Arguments:
+    -----------
+    fn: str
+        filepath + filename of the kml file to be read          
+                
+    Returns:    -----------
+        polygon: list
+            coordinates extracted from the .kml file
+        
+    """    
+    
+    # read .kml file
+    with open(fn) as kmlFile:
+        doc = kmlFile.read() 
+    # parse to find coordinates field
+    str1 = '<coordinates>'
+    str2 = '</coordinates>'
+    subdoc = doc[doc.find(str1)+len(str1):doc.find(str2)]
+    coordlist = subdoc.split('\n')
+    # read coordinates
+    polygon = []
+    for i in range(1,len(coordlist)-1):
+        polygon.append([float(coordlist[i].split(',')[0]), float(coordlist[i].split(',')[1])])
+        
+    return [polygon]
