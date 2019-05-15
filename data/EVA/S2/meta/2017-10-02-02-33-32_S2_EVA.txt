@@ -1,3 +1,0 @@
-filename	2017-10-02-02-33-32_S2_EVA_10m.tif
-acc_georef	1
-epsg	32750

@@ -1,3 +1,0 @@
-filename	2018-06-04-02-33-37_S2_ASHBURTON_10m.tif
-acc_georef	1
-epsg	32750

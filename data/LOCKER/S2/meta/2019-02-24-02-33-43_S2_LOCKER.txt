@@ -1,3 +1,0 @@
-filename	2019-02-24-02-33-43_S2_LOCKER_10m.tif
-acc_georef	1
-epsg	32750

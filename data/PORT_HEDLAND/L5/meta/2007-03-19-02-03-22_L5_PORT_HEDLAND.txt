@@ -1,3 +1,0 @@
-filename	2007-03-19-02-03-22_L5_PORT_HEDLAND
-acc_georef	5.538
-epsg	32650

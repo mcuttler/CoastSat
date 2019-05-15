@@ -1,3 +1,0 @@
-filename	2016-09-12-02-32-46_S2_SUNDAY_10m.tif
-acc_georef	1
-epsg	32750

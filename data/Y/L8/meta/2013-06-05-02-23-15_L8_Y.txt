@@ -1,3 +1,0 @@
-filename	2013-06-05-02-23-15_L8_Y_pan.tif
-acc_georef	5.863
-epsg	32650

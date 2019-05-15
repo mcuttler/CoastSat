@@ -1,3 +1,0 @@
-filename	2017-11-01-02-32-36_S2_OBSERVATION_10m.tif
-acc_georef	1
-epsg	32750

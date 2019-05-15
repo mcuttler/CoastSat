@@ -1,3 +1,0 @@
-filename	1999-11-25-01-55-02_L7_PORT_HEDLAND_pan.tif
-acc_georef	4.888
-epsg	32650

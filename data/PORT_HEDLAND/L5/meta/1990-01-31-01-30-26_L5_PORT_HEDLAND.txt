@@ -1,3 +1,0 @@
-filename	1990-01-31-01-30-26_L5_PORT_HEDLAND
-acc_georef	4.903
-epsg	32650

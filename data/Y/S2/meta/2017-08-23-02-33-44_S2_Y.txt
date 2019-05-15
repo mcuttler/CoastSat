@@ -1,3 +1,0 @@
-filename	2017-08-23-02-33-44_S2_Y_10m.tif
-acc_georef	1
-epsg	32750

@@ -1,3 +1,0 @@
-filename	2003-12-30-01-41-00_L5_PORT_HEDLAND
-acc_georef	6.953
-epsg	32650

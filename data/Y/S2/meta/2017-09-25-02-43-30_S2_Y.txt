@@ -1,3 +1,0 @@
-filename	2017-09-25-02-43-30_S2_Y_10m.tif
-acc_georef	1
-epsg	32750

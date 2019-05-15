@@ -1,3 +1,0 @@
-filename	2010-04-13-01-54-29_L7_PORT_HEDLAND_pan.tif
-acc_georef	5.64
-epsg	32650

@@ -1,3 +1,0 @@
-filename	2013-05-20-02-23-14_L8_LOCKER_pan.tif
-acc_georef	6.599
-epsg	32650

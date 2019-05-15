@@ -1,3 +1,0 @@
-filename	2018-07-21-02-20-25_L8_Y_pan.tif
-acc_georef	6.642
-epsg	32650

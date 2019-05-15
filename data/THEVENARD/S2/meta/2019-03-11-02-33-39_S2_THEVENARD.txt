@@ -1,3 +1,0 @@
-filename	2019-03-11-02-33-39_S2_THEVENARD_10m.tif
-acc_georef	-1
-epsg	32750

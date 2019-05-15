@@ -1,3 +1,0 @@
-filename	2018-01-20-02-32-42_S2_SUNDAY_10m.tif
-acc_georef	1
-epsg	32750

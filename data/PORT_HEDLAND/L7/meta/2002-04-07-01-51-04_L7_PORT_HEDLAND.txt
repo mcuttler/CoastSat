@@ -1,3 +1,0 @@
-filename	2002-04-07-01-51-04_L7_PORT_HEDLAND_pan.tif
-acc_georef	4.589
-epsg	32650

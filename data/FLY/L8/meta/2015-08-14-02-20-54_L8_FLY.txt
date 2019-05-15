@@ -1,3 +1,0 @@
-filename	2015-08-14-02-20-54_L8_FLY_pan.tif
-acc_georef	5.273
-epsg	32650

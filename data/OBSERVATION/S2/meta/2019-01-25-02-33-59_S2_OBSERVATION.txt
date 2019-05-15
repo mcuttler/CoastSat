@@ -1,3 +1,0 @@
-filename	2019-01-25-02-33-59_S2_OBSERVATION_10m.tif
-acc_georef	1
-epsg	32750

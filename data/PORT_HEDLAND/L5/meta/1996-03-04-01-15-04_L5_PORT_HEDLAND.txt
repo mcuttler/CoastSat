@@ -1,3 +1,0 @@
-filename	1996-03-04-01-15-04_L5_PORT_HEDLAND
-acc_georef	4.741
-epsg	32650

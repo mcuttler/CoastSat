@@ -1,3 +1,0 @@
-filename	2018-01-05-02-32-42_S2_THEVENARD_10m.tif
-acc_georef	1
-epsg	32750

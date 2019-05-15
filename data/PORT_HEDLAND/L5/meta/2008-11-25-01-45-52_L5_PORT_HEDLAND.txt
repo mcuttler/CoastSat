@@ -1,3 +1,0 @@
-filename	2008-11-25-01-45-52_L5_PORT_HEDLAND
-acc_georef	5.2
-epsg	32650

@@ -1,3 +1,0 @@
-filename	1996-07-10-01-22-33_L5_PORT_HEDLAND
-acc_georef	4.912
-epsg	32650

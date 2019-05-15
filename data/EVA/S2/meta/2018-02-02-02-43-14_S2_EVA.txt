@@ -1,3 +1,0 @@
-filename	2018-02-02-02-43-14_S2_EVA_10m.tif
-acc_georef	1
-epsg	32750

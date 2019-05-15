@@ -1,3 +1,0 @@
-filename	1999-06-10-01-40-14_L5_PORT_HEDLAND
-acc_georef	5.334
-epsg	32650

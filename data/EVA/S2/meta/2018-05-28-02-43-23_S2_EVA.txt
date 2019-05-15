@@ -1,3 +1,0 @@
-filename	2018-05-28-02-43-23_S2_EVA_10m.tif
-acc_georef	1
-epsg	32750

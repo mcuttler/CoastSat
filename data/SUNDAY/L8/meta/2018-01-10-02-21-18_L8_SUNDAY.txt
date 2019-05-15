@@ -1,3 +1,0 @@
-filename	2018-01-10-02-21-18_L8_SUNDAY_pan.tif
-acc_georef	7.737
-epsg	32650

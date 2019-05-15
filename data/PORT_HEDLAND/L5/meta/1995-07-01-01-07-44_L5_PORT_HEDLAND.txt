@@ -1,3 +1,0 @@
-filename	1995-07-01-01-07-44_L5_PORT_HEDLAND
-acc_georef	6.048
-epsg	32650

@@ -1,3 +1,0 @@
-filename	2015-12-04-02-21-21_L8_EVA_pan.tif
-acc_georef	7.386
-epsg	32650

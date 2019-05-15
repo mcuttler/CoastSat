@@ -1,3 +1,0 @@
-filename	1988-07-13-01-32-57_L5_PORT_HEDLAND
-acc_georef	3.98
-epsg	32650

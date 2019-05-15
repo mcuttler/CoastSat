@@ -1,3 +1,0 @@
-filename	1998-09-27-01-41-06_L5_PORT_HEDLAND
-acc_georef	6.177
-epsg	32650

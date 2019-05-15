@@ -1,3 +1,0 @@
-filename	2017-04-07-02-19-43_S2_PORT_HEDLAND_10m.tif
-acc_georef	1
-epsg	32750

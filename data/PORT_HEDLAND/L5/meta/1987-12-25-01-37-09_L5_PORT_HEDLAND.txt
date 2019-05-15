@@ -1,3 +1,0 @@
-filename	1987-12-25-01-37-09_L5_PORT_HEDLAND
-acc_georef	7.245
-epsg	32650

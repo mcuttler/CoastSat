@@ -1,3 +1,0 @@
-filename	2015-11-14-02-17-22_S2_PORT_HEDLAND_10m_dup.tif
-acc_georef	1
-epsg	32750

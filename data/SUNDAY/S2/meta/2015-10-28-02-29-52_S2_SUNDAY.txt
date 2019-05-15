@@ -1,3 +1,0 @@
-filename	2015-10-28-02-29-52_S2_SUNDAY_10m.tif
-acc_georef	1
-epsg	32750

@@ -1,3 +1,0 @@
-filename	2015-06-11-02-20-27_L8_SUNDAY_pan.tif
-acc_georef	5.899
-epsg	32650

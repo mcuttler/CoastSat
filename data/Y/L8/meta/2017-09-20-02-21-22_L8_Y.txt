@@ -1,3 +1,0 @@
-filename	2017-09-20-02-21-22_L8_Y_pan.tif
-acc_georef	5.602
-epsg	32650

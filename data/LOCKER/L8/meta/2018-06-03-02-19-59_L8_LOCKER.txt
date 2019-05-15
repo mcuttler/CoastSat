@@ -1,3 +1,0 @@
-filename	2018-06-03-02-19-59_L8_LOCKER_pan.tif
-acc_georef	6.349
-epsg	32650

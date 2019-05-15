@@ -1,3 +1,0 @@
-filename	2003-10-03-01-50-26_L7_PORT_HEDLAND_pan.tif
-acc_georef	6.121
-epsg	32650

@@ -1,3 +1,0 @@
-filename	2016-08-16-02-21-17_L8_OBSERVATION_pan.tif
-acc_georef	5.065
-epsg	32650

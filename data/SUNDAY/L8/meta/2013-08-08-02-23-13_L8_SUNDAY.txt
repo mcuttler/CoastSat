@@ -1,3 +1,0 @@
-filename	2013-08-08-02-23-13_L8_SUNDAY_pan.tif
-acc_georef	5.57
-epsg	32650

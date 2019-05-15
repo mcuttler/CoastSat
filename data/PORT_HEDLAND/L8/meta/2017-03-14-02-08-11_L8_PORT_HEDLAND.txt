@@ -1,3 +1,0 @@
-filename	2017-03-14-02-08-11_L8_PORT_HEDLAND_pan.tif
-acc_georef	6.327
-epsg	32650
