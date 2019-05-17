@@ -32,7 +32,7 @@
     filepath_data = os.path.join(os.getcwd(), 'data')
     
     #island file - info about island slope and center coordinates
-    island_file = sitename + '_info.csv'
+    island_file = os.path.join(os.getcwd(), 'data', sitename, sitename + '_info.csv')
     
     # put all the inputs into a dictionnary
     inputs = {
