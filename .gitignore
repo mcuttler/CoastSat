@@ -9,3 +9,8 @@
 *.pkl
 *.kml
 *checkpoint.ipynb
+*.txt
+*.csv
+*.db
+*.avi
+*.dat
