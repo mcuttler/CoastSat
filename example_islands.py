@@ -18,7 +18,7 @@
 
     
     # region of interest (longitude, latitude in WGS84), can be loaded from a .kml polygon
-    polygon = SDS_tools.polygon_from_kml(os.path.join(os.getcwd(), 'KMLs','FLY.kml'))
+    polygon = SDS_tools.polygon_from_kml(os.path.join(os.getcwd(), 'KMLs','ASHBURTON.kml'))
                 
     # date range
     dates = ['2013-01-01', '2019-05-01']
@@ -27,7 +27,7 @@
     sat_list = ['S2']
     
     # name of the site
-    sitename = 'FLY'
+    sitename = 'ASHBURTON'
     
     # filepath where data will be stored
     filepath_data = os.path.join(os.getcwd(), 'data')
@@ -51,7 +51,11 @@
 #metadata = SDS_download.retrieve_images(inputs)
 
 # if you have already downloaded the images, just load the metadata file
-metadata = SDS_download.get_metadata(inputs)     
+metadata = SDS_download.get_metadata(inputs)   
+#for only S2 imagery  
+metadata = {'S2': metadata['S2']}
+
+print('Check that S2 dates match range of tide data!')
     
     #%% 3. Batch shoreline detection
         
@@ -108,7 +112,7 @@ metadata = SDS_download.get_metadata(inputs)
     # now we have to define cross-shore transects over which to quantify the shoreline changes
     # each transect is defined by two points, its origin and a second point that defines its orientation
     # the parameter transect length determines how far from the origin the transect will span
-    settings['transect_length'] = 300 
+    settings['transect_length'] = 400 
     
     # there are 3 options to create the transects:
     # - option 1: draw the shore-normal transects along the beach
@@ -147,27 +151,8 @@ metadata = SDS_download.get_metadata(inputs)
     settings['along_dist'] = 10
     
     #add some print out to show percentage of shorelines processed 
-    cross_distance = SDS_island_transects.compute_intersection(output, transects, settings) 
-    
-       
-    # plot the time-series
-    #from matplotlib import gridspec
-    #fig = plt.figure()
-    #gs = gridspec.GridSpec(len(cross_distance),1)
-    #gs.update(left=0.05, right=0.95, bottom=0.05, top=0.95, hspace=0.05)
-    #for i,key in enumerate(cross_distance.keys()):
-    #    ax = fig.add_subplot(gs[i,0])
-    #    ax.grid(linestyle=':', color='0.5')
-    #    ax.set_ylim([-75,75])
-    #    if not i == len(cross_distance.keys()):
-    #        ax.set_xticks = []
-    #    ax.plot(output['dates'], cross_distance[key]- np.nanmedian(cross_distance[key]), '-^', markersize=6)
-    #    ax.set_ylabel('distance [m]', fontsize=12)
-    #    ax.text(0.5,0.95,'Transect ' + key, bbox=dict(boxstyle="square", ec='k',fc='w'), ha='center',
-    #            va='top', transform=ax.transAxes, fontsize=14)
-    #mng = plt.get_current_fig_manager()                                         
-    #mng.window.showMaximized()    
-    #fig.set_size_inches([15.76,  8.52])
+    cross_distance = SDS_island_transects.compute_intersection(output, transects, settings)            
+
     
     #%% 5. tide correction for transects and sand polygon
     
@@ -177,6 +162,7 @@ metadata = SDS_download.get_metadata(inputs)
     #    tide = pickle.load(f) 
     
     #process tide data
+    #input tide data is in local time (Australian West Coast, UTC +8 hrs), but code below converts to UTC
     tide_file = 'E:\Dropbox\Pilbara Island Remote Sensing\TideData\ExGulf_Tides.txt'
     tide, output_corrected = SDS_island_tools.process_tide_data(tide_file, output)    
 
