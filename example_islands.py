@@ -8,13 +8,14 @@
     
     # load modules
     import os
-    import numpy as np    
+    import numpy as np
     import pickle
-    import pandas as pd
     import warnings
     warnings.filterwarnings("ignore")
     import matplotlib.pyplot as plt
-    import SDS_download, SDS_preprocess, SDS_tools, SDS_transects, SDS_shoreline
+    from coastsat import SDS_download, SDS_preprocess, SDS_shoreline, SDS_tools, SDS_transects
+    from islands import SDS_island_tools, SDS_island_shorelines, SDS_island_transects
+
     
     # region of interest (longitude, latitude in WGS84), can be loaded from a .kml polygon
     polygon = SDS_tools.coords_from_kml('FLY.kml')
@@ -46,24 +47,11 @@
     
     #%% 2. Retrieve images
     
-    # retrieve satellite images from GEE
-    metadata = SDS_download.retrieve_images(inputs)
-    
-    # if you have already downloaded the images, just load the metadata file
-#    filepath = os.path.join(inputs['filepath'], sitename)
-#    with open(os.path.join(filepath, sitename + '_metadata' + '.pkl'), 'rb') as f:
-#        metadata = pickle.load(f)
-    
-    ##################################################################################################
-    # create a subset of the metadata for testing
-    
-    #n = 100 # number of images
-    #metadata.pop('S2')
-    #metadata2 = dict([])
-    #metadata2['L8'] = dict([])
-    #for key in metadata['L8'].keys():
-    #    metadata2['L8'][key] =  [metadata['L8'][key][i] for i in range(n)]
-    
+# retrieve satellite images from GEE
+#metadata = SDS_download.retrieve_images(inputs)
+
+# if you have already downloaded the images, just load the metadata file
+metadata = SDS_download.get_metadata(inputs)     
     
     #%% 3. Batch shoreline detection
         
@@ -102,12 +90,13 @@
     output = SDS_shoreline.extract_shorelines(metadata, settings)
     
     #plot time series of beach area
-    #fig = plt.figure()
-    #plt.plot(output['dates'],output['sand_area'],'b-x')
-    #plt.grid('on')
-    #plt.xlabel('Date')
-    #plt.ylabel('Sub-aerial sand area (m^2)')
-    #fig.set_size_inches([8,  4])
+    fig = plt.figure()
+    plt.plot(output['dates'],output['sand_area'],'b-x')
+    plt.grid('on')
+    plt.xlabel('Date')
+    plt.ylabel('Sub-aerial sand area (m^2)')
+    fig.set_size_inches([8,  4])
+    
     #%% make figures showing timeseries of beach area and centroid movement
     #plot centroid data
     
@@ -146,39 +135,7 @@
     #
     #fig.set_size_inches([8,  6])
     #l,b,w,h = ax1.get_position().bounds
-    #ax1.set_position([l,b+0.05,w,h])
-    
-    #%% make a figure of the time coverage
-    #from matplotlib import gridspec
-    #from matplotlib import patches as mpatches
-    #fig = plt.figure()
-    #ax1 = fig.add_subplot(111)
-    #ax1.yaxis.grid(linestyle=':', color='0.5')
-    #ax1.set_ylabel('# images')
-    #years = np.arange(output['dates'][0].year, output['dates'][-1].year+1)
-    #im_counts = dict([])
-    #total_sum = 0
-    #for year in years:
-    #    im_counts[str(year)] = dict([])
-    #    for satname in np.unique(output['satname']):
-    #        idx_year = [_.year == year for _ in output['dates']]
-    #        idx_satname = [_ == satname for _ in output['satname']]
-    #        idx = np.logical_and(idx_year, idx_satname)
-    #        im_counts[str(year)][satname] = sum(idx)
-    #        total_sum = total_sum + sum(idx)
-    #        if satname == 'L8': 
-    #            barcolor = 'C0'
-    #            ax1.bar(year, height=sum(idx), color=barcolor)                     
-    #        elif satname == 'S2': 
-    #            barcolor = 'C1'
-    #            ax1.bar(year, height=sum(idx), color=barcolor, bottom=im_counts[str(year)]['L8'])                                     
-    #blue = mpatches.Patch(color='C0', label='L8')
-    #orange = mpatches.Patch(color='C1', label='S2')
-    #ax1.legend(handles=[blue, orange], loc=2) 
-    #average = total_sum/len(years)
-    #plt.title('%d images, %.2f images / year' % (len(output['dates']), average))
-    
-    
+    #ax1.set_position([l,b+0.05,w,h])     
     
     #%% 4. Shoreline analysis
     

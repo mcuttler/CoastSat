@@ -191,6 +191,9 @@ def calc_island_transects(settings):
     x,y (input) as the origin for the transects and calculates transects of given length
     and heading (clockwise from North)
     
+    M Cuttler - 2019
+    UWA
+    
     Arguments:
     ----------
         x: int or float
