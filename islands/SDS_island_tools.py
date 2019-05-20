@@ -643,7 +643,7 @@ def tide_correct_sand_polygon(cross_distance_corrected, output_corrected, settin
     
     #export output data to csv file  
     csv_path = os.path.join(filepath,sitename + '_sand_polygons_tide_corrected.csv')
-    data_out = pd.DataFrome.from_dict(output_corrected)
+    data_out = pd.DataFrame.from_dict(output_corrected)
     
     data_out.to_csv(csv_path)
     
