@@ -28,7 +28,7 @@ import pickle
 import simplekml
 
 # own modules
-import SDS_tools, SDS_preprocess
+from coastsat import SDS_tools, SDS_preprocess
 
 np.seterr(all='ignore') # raise/ignore divisions by 0 and nans
 
