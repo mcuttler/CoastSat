@@ -18,7 +18,7 @@
 
     
     # region of interest (longitude, latitude in WGS84), can be loaded from a .kml polygon
-    polygon = SDS_tools.polygon_from_kml(os.path.join(os.getcwd(), 'KMLs','FLY.kml'))
+    polygon = SDS_tools.polygon_from_kml(os.path.join(os.getcwd(), 'KMLs','OBSERVATION.kml'))
                 
     # date range
     dates = ['2013-01-01', '2019-05-01']
@@ -27,7 +27,7 @@
     sat_list = ['S2']
     
     # name of the site
-    sitename = 'FLY'
+    sitename = 'OBSERVATION'
     
     # filepath where data will be stored
     filepath_data = os.path.join(os.getcwd(), 'data')
@@ -153,12 +153,7 @@ print('Check that S2 dates match range of tide data!')
     #add some print out to show percentage of shorelines processed 
     cross_distance = SDS_island_transects.compute_intersection(output, transects, settings)            
     
-    #optionally export cross_distance to csv   
-#    csv_path = os.path.join(filepath,sitename + '_cross_distance.csv')
-#    data_out = pd.DataFrame.from_dict(cross_distance)    
-#    data_out.to_csv(csv_path)
-
-    
+   
     #%% 5. tide correction for transects and sand polygon
     
     #load tide if already processed
@@ -173,11 +168,7 @@ print('Check that S2 dates match range of tide data!')
 
     cross_distance_corrected = SDS_island_tools.tide_correct(cross_distance,tide,settings)
 
-    #optionally export cross_distance to csv   
-#    csv_path = os.path.join(filepath,sitename + 'cross_distance_corrected.csv')
-#    data_out = pd.DataFrame.from_dict(cross_distance_corrected)    
-#    data_out.to_csv(csv_path)
-        
+       
     #Calculate tidally corrected sand_polygon 
     
     output_corrected = SDS_island_tools.tide_correct_sand_polygon(cross_distance_corrected, output_corrected, settings)
