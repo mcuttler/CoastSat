@@ -152,7 +152,7 @@ print('Check that S2 dates match range of tide data!')
     
     #add some print out to show percentage of shorelines processed 
     cross_distance = SDS_island_transects.compute_intersection(output, transects, settings)            
-
+    
     
     #%% 5. tide correction for transects and sand polygon
     
@@ -167,7 +167,8 @@ print('Check that S2 dates match range of tide data!')
     tide, output_corrected = SDS_island_tools.process_tide_data(tide_file, output)    
 
     cross_distance_corrected = SDS_island_tools.tide_correct(cross_distance,tide,settings['zref'],settings['beach_slope'])
-        
+
+       
     #Calculate tidally corrected sand_polygon 
     
     output_corrected = SDS_island_tools.tide_correct_sand_polygon(cross_distance_corrected, output_corrected, settings)
