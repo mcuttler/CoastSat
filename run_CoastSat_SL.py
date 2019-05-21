@@ -23,7 +23,7 @@ from coastsat import SDS_download, SDS_preprocess, SDS_shoreline, SDS_tools, SDS
 #            [151.301454, -33.700754]]]
 # can also be loaded from a .kml polygon
 #kml_polygon = os.path.join(os.getcwd(), 'examples', 'NARRA_polygon.kml')
- polygon = SDS_tools.polygon_from_kml(os.path.join(os.getcwd(), 'KMLs','TANTABIDDI_SALIENT.kml'))
+polygon = SDS_tools.polygon_from_kml(os.path.join(os.getcwd(), 'KMLs','TANTABIDDI_SALIENT.kml'))
        
 # date range
 dates = ['2019-01-01', '2019-05-01']
@@ -49,7 +49,7 @@ inputs = {
 #%% 2. Retrieve images
 
 # retrieve satellite images from GEE
-metadata = SDS_download.retrieve_images(inputs)
+#metadata = SDS_download.retrieve_images(inputs)
 
 # if you have already downloaded the images, just load the metadata file
 metadata = SDS_download.get_metadata(inputs) 
@@ -83,7 +83,7 @@ settings['reference_shoreline'] = SDS_preprocess.get_reference_sl(metadata, sett
 settings['max_dist_ref'] = 100        
 
 # extract shorelines from all images (also saves output.pkl and shorelines.kml)
-output = SDS_shoreline.extract_shorelines(metadata, settings)
+output = SDS_shoreline.extract_shorelines(metadata, settings)	
 
 # plot the mapped shorelines
 fig = plt.figure()
