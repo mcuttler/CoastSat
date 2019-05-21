@@ -9,6 +9,7 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 import pdb
+import pandas as pd
 
 # other modules
 import skimage.transform as transform
@@ -340,6 +341,12 @@ def compute_intersection(output, transects, settings):
     cross_dist = dict([])
     for j,key in enumerate(list(transects.keys())): 
         cross_dist[key] = chainage['median'][:,j]    
+    
+    #save cross_distance dictionary to CSV
+    filepath = os.path.join(os.getcwd(), 'data', settings['inputs']['sitename'])
+    csv_path = os.path.join(filepath, settings['inputs']['sitename'] + '_cross_distance.csv')
+    data_out = pd.DataFrame.from_dict(cross_dist)    
+    data_out.to_csv(csv_path)
     
     return cross_dist
 
