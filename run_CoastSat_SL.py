@@ -23,16 +23,16 @@ from coastsat import SDS_download, SDS_preprocess, SDS_shoreline, SDS_tools, SDS
 #            [151.301454, -33.700754]]]
 # can also be loaded from a .kml polygon
 #kml_polygon = os.path.join(os.getcwd(), 'examples', 'NARRA_polygon.kml')
-polygon = SDS_tools.polygon_from_kml(os.path.join(os.getcwd(), 'KMLs','CORAL_BAY.kml'))
+polygon = SDS_tools.polygon_from_kml(os.path.join(os.getcwd(), 'KMLs','MAURITIUS.kml'))
        
 # date range
-dates = ['1986-01-01', '2019-05-01']
+dates = ['1985-01-01', '2019-05-01']
 
 # satellite missions
 sat_list = ['L5','L7','L8','S2']
 
 # name of the site
-sitename = 'CORAL_BAY'
+sitename = 'MAURITIUS'
 
 # filepath where data will be stored
 filepath_data = os.path.join(os.getcwd(), 'data')
@@ -54,13 +54,11 @@ metadata = SDS_download.retrieve_images(inputs)
 # if you have already downloaded the images, just load the metadata file
 #metadata = SDS_download.get_metadata(inputs) 
 
-#%% 3. Batch shoreline detection
-    
 # settings for the shoreline extraction
 settings = { 
     # general parameters:
     'cloud_thresh': 0.5,        # threshold on maximum cloud cover
-    'output_epsg': 28356,       # epsg code of spatial reference system desired for the output   
+    'output_epsg': 3337,       # epsg code of spatial reference system desired for the output; GDA94 zone 50  
     # quality control:
     'check_detection': True,    # if True, shows each shoreline detection to the user for validation
     'save_figure': True,        # if True, saves a figure showing the mapped shoreline for each image
@@ -76,6 +74,10 @@ settings = {
 
 # [OPTIONAL] preprocess images (cloud masking, pansharpening/down-sampling)
 SDS_preprocess.save_jpg(metadata, settings)
+
+#%% 3. Batch shoreline detection
+    
+
 
 # [OPTIONAL] create a reference shoreline (helps to identify outliers and false detections)
 settings['reference_shoreline'] = SDS_preprocess.get_reference_sl(metadata, settings)
@@ -142,7 +144,7 @@ for i,key in enumerate(cross_distance.keys()):
         continue
     ax = fig.add_subplot(gs[i,0])
     ax.grid(linestyle=':', color='0.5')
-    ax.set_ylim([-50,50])
+    ax.set_ylim([-30,30])
     ax.plot(output['dates'], cross_distance[key]- np.nanmedian(cross_distance[key]), '-^', markersize=6)
     ax.set_ylabel('distance [m]', fontsize=12)
     ax.text(0.5,0.95,'Transect ' + key, bbox=dict(boxstyle="square", ec='k',fc='w'), ha='center',
