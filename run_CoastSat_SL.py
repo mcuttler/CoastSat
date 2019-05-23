@@ -16,14 +16,14 @@ import matplotlib.pyplot as plt
 from coastsat import SDS_download, SDS_preprocess, SDS_shoreline, SDS_tools, SDS_transects
 
 ## region of interest (longitude, latitude in WGS84)
-polygon = [[[151.301454, -33.700754],
-            [151.311453, -33.702075],
-            [151.307237, -33.739761],
-            [151.294220, -33.736329],
-            [151.301454, -33.700754]]]
+#polygon = [[[151.301454, -33.700754],
+#            [151.311453, -33.702075],
+#            [151.307237, -33.739761],
+#            [151.294220, -33.736329],
+#            [151.301454, -33.700754]]]
 # can also be loaded from a .kml polygon
 #kml_polygon = os.path.join(os.getcwd(), 'examples', 'NARRA_polygon.kml')
-polygon = SDS_tools.polygon_from_kml(os.path.join(os.getcwd(), 'KMLs','MAURITIUS.kml'))
+polygon = SDS_tools.polygon_from_kml(os.path.join(os.getcwd(), 'KMLs','BINNINGUP.kml'))
        
 # date range
 dates = ['1985-01-01', '2019-05-01']
@@ -32,7 +32,7 @@ dates = ['1985-01-01', '2019-05-01']
 sat_list = ['L5','L7','L8','S2']
 
 # name of the site
-sitename = 'MAURITIUS'
+sitename = 'BINNINGUP'
 
 # filepath where data will be stored
 filepath_data = os.path.join(os.getcwd(), 'data')
