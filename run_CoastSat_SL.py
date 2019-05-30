@@ -16,23 +16,23 @@ import matplotlib.pyplot as plt
 from coastsat import SDS_download, SDS_preprocess, SDS_shoreline, SDS_tools, SDS_transects
 
 ## region of interest (longitude, latitude in WGS84)
-polygon = [[[151.301454, -33.700754],
-            [151.311453, -33.702075],
-            [151.307237, -33.739761],
-            [151.294220, -33.736329],
-            [151.301454, -33.700754]]]
+#polygon = [[[151.301454, -33.700754],
+#            [151.311453, -33.702075],
+#            [151.307237, -33.739761],
+#            [151.294220, -33.736329],
+#            [151.301454, -33.700754]]]
 # can also be loaded from a .kml polygon
 #kml_polygon = os.path.join(os.getcwd(), 'examples', 'NARRA_polygon.kml')
-polygon = SDS_tools.polygon_from_kml(os.path.join(os.getcwd(), 'KMLs','MAURITIUS.kml'))
+polygon = SDS_tools.polygon_from_kml(os.path.join(os.getcwd(), 'KMLs','MANDURAH_OCEAN.kml'))
        
 # date range
-dates = ['1985-01-01', '2019-05-01']
+dates = ['2015-10-01', '2016-01-01']
 
 # satellite missions
 sat_list = ['L5','L7','L8','S2']
 
 # name of the site
-sitename = 'MAURITIUS'
+sitename = 'MANDURAH'
 
 # filepath where data will be stored
 filepath_data = os.path.join(os.getcwd(), 'data')
@@ -49,16 +49,16 @@ inputs = {
 #%% 2. Retrieve images and save
 
 # retrieve satellite images from GEE
-metadata = SDS_download.retrieve_images(inputs)
+#metadata = SDS_download.retrieve_images(inputs)
 
 # if you have already downloaded the images, just load the metadata file
-#metadata = SDS_download.get_metadata(inputs) 
+metadata = SDS_download.get_metadata(inputs) 
 
 # settings for the shoreline extraction
 settings = { 
     # general parameters:
     'cloud_thresh': 0.5,        # threshold on maximum cloud cover
-    'output_epsg': 3337,       # epsg code of spatial reference system desired for the output; GDA94 zone 50  
+    'output_epsg': 32650,       # epsg code of spatial reference system desired for the output; GDA94 zone 50  
     # quality control:
     'check_detection': True,    # if True, shows each shoreline detection to the user for validation
     'save_figure': True,        # if True, saves a figure showing the mapped shoreline for each image
@@ -73,7 +73,7 @@ settings = {
 }
 
 # [OPTIONAL] preprocess images (cloud masking, pansharpening/down-sampling)
-SDS_preprocess.save_jpg(metadata, settings)
+#SDS_preprocess.save_jpg(metadata, settings)
 
 #%% 3. Batch shoreline detection
     

@@ -25,7 +25,7 @@ import matplotlib.cm as cm
 from matplotlib import gridspec
 from pylab import ginput
 import pickle
-import simplekml
+#import simplekml
 
 # own modules
 from coastsat import SDS_tools, SDS_preprocess

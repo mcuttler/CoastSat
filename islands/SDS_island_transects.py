@@ -15,7 +15,7 @@ import pandas as pd
 import skimage.transform as transform
 from pylab import ginput
 import pickle
-import simplekml
+#import simplekml
 import json
 from osgeo import ogr
 
