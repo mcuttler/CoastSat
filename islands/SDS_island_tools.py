@@ -16,7 +16,7 @@ from datetime import tzinfo, timedelta, datetime, timezone
 # other modules
 from osgeo import gdal, osr
 import skimage.transform as transform
-import simplekml
+#import simplekml
 from scipy.ndimage.filters import uniform_filter
 from shapely.geometry import LineString, LinearRing, Polygon
 from shapely import ops
