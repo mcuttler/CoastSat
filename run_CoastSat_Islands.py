@@ -18,7 +18,7 @@
 
     
     # region of interest (longitude, latitude in WGS84), can be loaded from a .kml polygon
-    polygon = SDS_tools.polygon_from_kml(os.path.join(os.getcwd(), 'KMLs','OBSERVATION.kml'))
+    polygon = SDS_tools.polygon_from_kml(os.path.join(os.getcwd(), 'KMLs','ASHBURTON.kml'))
                 
     # date range
     dates = ['2013-01-01', '2019-05-01']
@@ -27,7 +27,7 @@
     sat_list = ['S2']
     
     # name of the site
-    sitename = 'OBSERVATION'
+    sitename = 'ASHBURTON'
     
     # filepath where data will be stored
     filepath_data = os.path.join(os.getcwd(), 'data')
