@@ -26,7 +26,7 @@ from coastsat import SDS_download, SDS_preprocess, SDS_shoreline, SDS_tools, SDS
 polygon = SDS_tools.polygon_from_kml(os.path.join(os.getcwd(), 'KMLs','MAURITIUS.kml'))
        
 # date range
-dates = ['2015-10-01', '2016-01-01']
+dates = ['1985-01-01', '2019-06-10']
 
 # satellite missions
 sat_list = ['L5','L7','L8','S2']
@@ -61,7 +61,7 @@ metadata = {'S2': metadata['S2']}
 settings = { 
     # general parameters:
     'cloud_thresh': 0.5,        # threshold on maximum cloud cover
-    'output_epsg': 4283,       # epsg code of spatial reference system desired for the output; GDA94 zone 50  
+    'output_epsg': 32740,  # epsg code of spatial reference system desired for the output; GDA94 zone 50  
     # quality control:
     'check_detection': True,    # if True, shows each shoreline detection to the user for validation
     'save_figure': True,        # if True, saves a figure showing the mapped shoreline for each image

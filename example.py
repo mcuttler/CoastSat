@@ -49,10 +49,10 @@ inputs = {
 #%% 2. Retrieve images
 
 # retrieve satellite images from GEE
-#metadata = SDS_download.retrieve_images(inputs)
+metadata = SDS_download.retrieve_images(inputs)
 
 # if you have already downloaded the images, just load the metadata file
-metadata = SDS_download.get_metadata(inputs) 
+#metadata = SDS_download.get_metadata(inputs) 
 
 #%% 3. Batch shoreline detection
     

@@ -18,16 +18,16 @@
 
     
     # region of interest (longitude, latitude in WGS84), can be loaded from a .kml polygon
-    polygon = SDS_tools.polygon_from_kml(os.path.join(os.getcwd(), 'KMLs','ASHBURTON.kml'))
+    polygon = SDS_tools.polygon_from_kml(os.path.join(os.getcwd(), 'KMLs','EVA.kml'))
                 
     # date range
-    dates = ['2013-01-01', '2019-05-01']
+    dates = ['2017-12-01', '2018-01-01']
     
     # satellite missions
     sat_list = ['S2']
     
     # name of the site
-    sitename = 'ASHBURTON'
+    sitename = 'EVA'
     
     # filepath where data will be stored
     filepath_data = os.path.join(os.getcwd(), 'data')
@@ -52,10 +52,7 @@
 
 # if you have already downloaded the images, just load the metadata file
 metadata = SDS_download.get_metadata(inputs)   
-#for only S2 imagery  
-metadata = {'S2': metadata['S2']}
 
-print('Check that S2 dates match range of tide data!')
     
     #%% 3. Batch shoreline detection
         
