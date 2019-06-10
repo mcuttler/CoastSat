@@ -18,7 +18,7 @@
 
     
     # region of interest (longitude, latitude in WGS84), can be loaded from a .kml polygon
-    polygon = SDS_tools.polygon_from_kml(os.path.join(os.getcwd(), 'KMLs','OBSERVATION.kml'))
+    polygon = SDS_tools.polygon_from_kml(os.path.join(os.getcwd(), 'KMLs','ASHBURTON.kml'))
                 
     # date range
     dates = ['2013-01-01', '2019-05-01']
@@ -27,7 +27,7 @@
     sat_list = ['S2']
     
     # name of the site
-    sitename = 'OBSERVATION'
+    sitename = 'ASHBURTON'
     
     # filepath where data will be stored
     filepath_data = os.path.join(os.getcwd(), 'data')
@@ -55,7 +55,7 @@ metadata = SDS_download.get_metadata(inputs)
 #for only S2 imagery  
 metadata = {'S2': metadata['S2']}
 
-print('Check that S2 dates match range of tide data!')
+#print('Check that S2 dates match range of tide data!')
     
     #%% 3. Batch shoreline detection
         
@@ -163,12 +163,12 @@ print('Check that S2 dates match range of tide data!')
     
     #process tide data
     #input tide data is in local time (Australian West Coast, UTC +8 hrs), but code below converts to UTC
-    tide_file = 'E:\Dropbox\Pilbara Island Remote Sensing\TideData\ExGulf_Tides.txt'
+#    tide_file = 'G:\Dropbox\Pilbara Island Remote Sensing\TideData\ExGulf_Tides.txt'
+    tide_file = 'P:\BROWNE_ReefIslandResilience\Data\Tides\ExGulf_Tides.txt'
     tide, output_corrected = SDS_island_tools.process_tide_data(tide_file, output)    
 
     cross_distance_corrected = SDS_island_tools.tide_correct(cross_distance,tide,settings)
 
-       
     #Calculate tidally corrected sand_polygon 
     
     output_corrected = SDS_island_tools.tide_correct_sand_polygon(cross_distance_corrected, output_corrected, settings)

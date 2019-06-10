@@ -940,29 +940,36 @@ def extract_shorelines(metadata, settings):
     # save outputput structure as output.pkl
     filepath = os.path.join(filepath_data, sitename)
     with open(os.path.join(filepath, sitename + '_output.pkl'), 'wb') as f:
-        pickle.dump(output, f)
+        pickle.dump(output, f)        
+    
+    # save output into a gdb.GeoDataFrame
+    gdf = SDS_tools.output_to_gdf(output)
+    # set projection
+    gdf.crs = {'init':'epsg:'+str(settings['output_epsg'])}
+    # save as geojson    
+    gdf.to_file(os.path.join(filepath, sitename + '_output.geojson'), driver='GeoJSON', encoding='utf-8')
 
     # save output as kml for GIS applications
-    kml = simplekml.Kml()
-    for i in range(len(output['shorelines'])):
-        if len(output['shorelines'][i]) == 0:
-            continue
-        sl = output['shorelines'][i]
-        date = output['dates'][i]
-        newline = kml.newlinestring(name= date.strftime('%Y-%m-%d %H:%M:%S'))
-        newline.coords = sl
-        newline.description = satname + ' shoreline' + '\n' + 'acquired at ' + date.strftime('%H:%M:%S') + ' UTC'
-    kml.save(os.path.join(filepath, sitename + '_output.kml'))  
-    
-    # save sand polygons as kml
-    kml = simplekml.Kml()
-    for i in range(len(output['sand_points'])):
-        if len(output['sand_points'][i]) == 0:
-            continue
-        sl = output['sand_points'][i]
-        date = output['dates'][i]
-        newline = kml.newpolygon(name=date.strftime('%Y-%m-%d %H:%M:%S'), outerboundaryis=sl)
-        newline.description = satname + ' shoreline' + '\n' + 'acquired at ' + date.strftime('%H:%M:%S') + ' UTC'
-    kml.save(os.path.join(filepath, sitename + '_sand_polygons.kml')) 
+#    kml = simplekml.Kml()
+#    for i in range(len(output['shorelines'])):
+#        if len(output['shorelines'][i]) == 0:
+#            continue
+#        sl = output['shorelines'][i]
+#        date = output['dates'][i]
+#        newline = kml.newlinestring(name= date.strftime('%Y-%m-%d %H:%M:%S'))
+#        newline.coords = sl
+#        newline.description = satname + ' shoreline' + '\n' + 'acquired at ' + date.strftime('%H:%M:%S') + ' UTC'
+#    kml.save(os.path.join(filepath, sitename + '_output.kml'))  
+#    
+#    # save sand polygons as kml
+#    kml = simplekml.Kml()
+#    for i in range(len(output['sand_points'])):
+#        if len(output['sand_points'][i]) == 0:
+#            continue
+#        sl = output['sand_points'][i]
+#        date = output['dates'][i]
+#        newline = kml.newpolygon(name=date.strftime('%Y-%m-%d %H:%M:%S'), outerboundaryis=sl)
+#        newline.description = satname + ' shoreline' + '\n' + 'acquired at ' + date.strftime('%H:%M:%S') + ' UTC'
+#    kml.save(os.path.join(filepath, sitename + '_sand_polygons.kml')) 
         
     return output

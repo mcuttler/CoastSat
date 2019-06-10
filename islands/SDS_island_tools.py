@@ -12,14 +12,15 @@ import math
 import pandas as pd
 import pickle
 from datetime import tzinfo, timedelta, datetime, timezone
+from coastsat import SDS_tools
 
 # other modules
 from osgeo import gdal, osr
 import skimage.transform as transform
-#import simplekml
 from scipy.ndimage.filters import uniform_filter
 from shapely.geometry import LineString, LinearRing, Polygon
 from shapely import ops
+
 
 def convert_pix2world(points, georef):
     """
@@ -626,32 +627,15 @@ def tide_correct_sand_polygon(cross_distance_corrected, output_corrected, settin
     filepath = os.path.join(filepath_data, sitename)
     with open(os.path.join(filepath, sitename + '_output_tide_corrected.pkl'), 'wb') as f:
         pickle.dump(output_corrected, f)
-        
-    # save output shorelines as kml for GIS applications
-#    kml = simplekml.Kml()
-#    for i in range(len(output['shorelines'])):
-#        if len(output['shorelines'][i]) == 0:
-#            continue
-#        sl = output['shorelines'][i]
-#        date = output['dates'][i]
-#        newline = kml.newlinestring(name= date.strftime('%Y-%m-%d %H:%M:%S'))
-#        newline.coords = sl
-#        newline.description = satname + ' shoreline' + '\n' + 'acquired at ' + date.strftime('%H:%M:%S') + ' UTC'
-#    kml.save(os.path.join(filepath, sitename + '_output.kml'))  
-#    
-    # save sand polygons as kml
-    kml = simplekml.Kml()
-    for i in range(len(output_corrected['sand_points_corrected'])):
-        if len(output_corrected['sand_points_corrected'][i]) == 0:
-            continue
-        sl = output_corrected['sand_points_corrected'][i]
-        date = output_corrected['dates'][i]
-        satname = output_corrected['satname'][i]
-        newline = kml.newpolygon(name=date.strftime('%Y-%m-%d %H:%M:%S'), outerboundaryis=sl)
-        newline.description = satname + ' shoreline' + '\n' + 'acquired at ' + date.strftime('%H:%M:%S') + ' UTC'
-        
-    kml.save(os.path.join(filepath, sitename + '_sand_polygons_tide_corrected.kml')) 
     
+    
+    # save output into a gdb.GeoDataFrame
+    gdf = SDS_tools.output_to_gdf(output_corrected)
+    # set projection
+    gdf.crs = {'init':'epsg:'+str(settings['output_epsg'])}
+    # save as geojson    
+    gdf.to_file(os.path.join(filepath, sitename + '_output_corrected.geojson'), driver='GeoJSON', encoding='utf-8')
+        
     #export output data to csv file  
     csv_path = os.path.join(filepath,sitename + '_sand_polygons_tide_corrected.csv')
     data_out = pd.DataFrame.from_dict(output_corrected)
