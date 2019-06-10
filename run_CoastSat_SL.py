@@ -54,14 +54,12 @@ inputs = {
 # if you have already downloaded the images, just load the metadata file
 metadata = SDS_download.get_metadata(inputs) 
 
-metadata = {'S2': metadata['S2']}
-
 
 # settings for the shoreline extraction
 settings = { 
     # general parameters:
     'cloud_thresh': 0.5,        # threshold on maximum cloud cover
-    'output_epsg': 32740,  # epsg code of spatial reference system desired for the output; GDA94 zone 50  
+    'output_epsg': 28350,  # epsg code of spatial reference system desired for the output; GDA94 zone 50  
     # quality control:
     'check_detection': True,    # if True, shows each shoreline detection to the user for validation
     'save_figure': True,        # if True, saves a figure showing the mapped shoreline for each image
