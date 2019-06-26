@@ -23,16 +23,16 @@ from coastsat import SDS_download, SDS_preprocess, SDS_shoreline, SDS_tools, SDS
 #            [151.301454, -33.700754]]]
 # can also be loaded from a .kml polygon
 #kml_polygon = os.path.join(os.getcwd(), 'examples', 'NARRA_polygon.kml')
-polygon = SDS_tools.polygon_from_kml(os.path.join(os.getcwd(), 'KMLs','TANTABIDDI_SALIENT.kml'))
+polygon = SDS_tools.polygon_from_kml(os.path.join(os.getcwd(), 'KMLs','GNARABUP.kml'))
        
 # date range
-dates = ['1985-01-01', '2019-06-10']
+dates = ['2019-03-01', '2019-06-10']
 
 # satellite missions
-sat_list = ['L5','L7','L8','S2']
+sat_list = ['S2']
 
 # name of the site
-sitename = 'TANTABIDDI_SALIENT'
+sitename = 'GNARABUP'
 
 # filepath where data will be stored
 filepath_data = os.path.join(os.getcwd(), 'data')
@@ -49,12 +49,10 @@ inputs = {
 #%% 2. Retrieve images and save
 
 # retrieve satellite images from GEE
-#metadata = SDS_download.retrieve_images(inputs)
+metadata = SDS_download.retrieve_images(inputs)
 
 # if you have already downloaded the images, just load the metadata file
-metadata = SDS_download.get_metadata(inputs) 
-
-#metadata = {'S2': metadata['S2']}
+#metadata = SDS_download.get_metadata(inputs) 
 
 
 # settings for the shoreline extraction
@@ -68,7 +66,7 @@ settings = {
     # add the inputs defined previously
     'inputs': inputs,
     # [ONLY FOR ADVANCED USERS] shoreline detection parameters:
-    'min_beach_area': 4500,     # minimum area (in metres^2) for an object to be labelled as a beach
+    'min_beach_area': 500,     # minimum area (in metres^2) for an object to be labelled as a beach
     'buffer_size': 150,         # radius (in metres) of the buffer around sandy pixels considered in the shoreline detection
     'min_length_sl': 200,       # minimum length (in metres) of shoreline perimeter to be valid
     'cloud_mask_issue': False,  # switch this parameter to True if sand pixels are masked (in black) on many images  
@@ -76,11 +74,10 @@ settings = {
 }
 
 # [OPTIONAL] preprocess images (cloud masking, pansharpening/down-sampling)
-#SDS_preprocess.save_jpg(metadata, settings)
-
+SDS_preprocess.save_jpg(metadata, settings)
+#
 #%% 3. Batch shoreline detection
     
-
 # [OPTIONAL] create a reference shoreline (helps to identify outliers and false detections)
 settings['reference_shoreline'] = SDS_preprocess.get_reference_sl(metadata, settings)
 # set the max distance (in meters) allowed from the reference shoreline for a detected shoreline to be valid
@@ -146,7 +143,7 @@ for i,key in enumerate(cross_distance.keys()):
         continue
     ax = fig.add_subplot(gs[i,0])
     ax.grid(linestyle=':', color='0.5')
-    ax.set_ylim([-50,50])
+    ax.set_ylim([-60,60])
     ax.plot(output['dates'], cross_distance[key]- np.nanmedian(cross_distance[key]), '-^', markersize=6)
     ax.set_ylabel('distance [m]', fontsize=12)
     ax.text(0.5,0.95,'Transect ▲' + key, bbox=dict(boxstyle="square", ec='k',fc='w'), ha='center',
