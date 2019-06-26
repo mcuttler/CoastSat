@@ -23,7 +23,7 @@ from coastsat import SDS_download, SDS_preprocess, SDS_shoreline, SDS_tools, SDS
 #            [151.301454, -33.700754]]]
 # can also be loaded from a .kml polygon
 #kml_polygon = os.path.join(os.getcwd(), 'examples', 'NARRA_polygon.kml')
-polygon = SDS_tools.polygon_from_kml(os.path.join(os.getcwd(), 'KMLs','MAURITIUS.kml'))
+polygon = SDS_tools.polygon_from_kml(os.path.join(os.getcwd(), 'KMLs','TANTABIDDI_SALIENT.kml'))
        
 # date range
 dates = ['1985-01-01', '2019-06-10']
@@ -32,7 +32,7 @@ dates = ['1985-01-01', '2019-06-10']
 sat_list = ['L5','L7','L8','S2']
 
 # name of the site
-sitename = 'MAURITIUS'
+sitename = 'TANTABIDDI_SALIENT'
 
 # filepath where data will be stored
 filepath_data = os.path.join(os.getcwd(), 'data')
@@ -54,14 +54,14 @@ inputs = {
 # if you have already downloaded the images, just load the metadata file
 metadata = SDS_download.get_metadata(inputs) 
 
-metadata = {'S2': metadata['S2']}
+#metadata = {'S2': metadata['S2']}
 
 
 # settings for the shoreline extraction
 settings = { 
     # general parameters:
     'cloud_thresh': 0.5,        # threshold on maximum cloud cover
-    'output_epsg': 32740,  # epsg code of spatial reference system desired for the output; GDA94 zone 50  
+    'output_epsg': 28350,  # epsg code of spatial reference system desired for the output; GDA94 zone 50  
     # quality control:
     'check_detection': True,    # if True, shows each shoreline detection to the user for validation
     'save_figure': True,        # if True, saves a figure showing the mapped shoreline for each image
@@ -80,7 +80,6 @@ settings = {
 
 #%% 3. Batch shoreline detection
     
-
 
 # [OPTIONAL] create a reference shoreline (helps to identify outliers and false detections)
 settings['reference_shoreline'] = SDS_preprocess.get_reference_sl(metadata, settings)
@@ -147,10 +146,10 @@ for i,key in enumerate(cross_distance.keys()):
         continue
     ax = fig.add_subplot(gs[i,0])
     ax.grid(linestyle=':', color='0.5')
-    ax.set_ylim([-30,30])
+    ax.set_ylim([-50,50])
     ax.plot(output['dates'], cross_distance[key]- np.nanmedian(cross_distance[key]), '-^', markersize=6)
     ax.set_ylabel('distance [m]', fontsize=12)
-    ax.text(0.5,0.95,'Transect ' + key, bbox=dict(boxstyle="square", ec='k',fc='w'), ha='center',
+    ax.text(0.5,0.95,'Transect ▲' + key, bbox=dict(boxstyle="square", ec='k',fc='w'), ha='center',
             va='top', transform=ax.transAxes, fontsize=14)
 mng = plt.get_current_fig_manager()                                         
 mng.window.showMaximized()    
