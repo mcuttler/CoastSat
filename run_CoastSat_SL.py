@@ -23,16 +23,16 @@ from coastsat import SDS_download, SDS_preprocess, SDS_shoreline, SDS_tools, SDS
 #            [151.301454, -33.700754]]]
 # can also be loaded from a .kml polygon
 #kml_polygon = os.path.join(os.getcwd(), 'examples', 'NARRA_polygon.kml')
-polygon = SDS_tools.polygon_from_kml(os.path.join(os.getcwd(), 'KMLs','GNARABUP.kml'))
+polygon = SDS_tools.polygon_from_kml(os.path.join(os.getcwd(), 'KMLs','MUTTONBIRD.kml'))
        
 # date range
-dates = ['2019-03-01', '2019-06-10']
+dates = ['1985-01-01', '2019-06-24']
 
 # satellite missions
-sat_list = ['S2']
+sat_list = ['L5','L7','L8','S2']
 
 # name of the site
-sitename = 'GNARABUP'
+sitename = 'MUTTONBIRD'
 
 # filepath where data will be stored
 filepath_data = os.path.join(os.getcwd(), 'data')
