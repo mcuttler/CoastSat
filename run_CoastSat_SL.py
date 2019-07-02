@@ -49,10 +49,10 @@ inputs = {
 #%% 2. Retrieve images and save
 
 # retrieve satellite images from GEE
-metadata = SDS_download.retrieve_images(inputs)
+#metadata = SDS_download.retrieve_images(inputs)
 
 # if you have already downloaded the images, just load the metadata file
-#metadata = SDS_download.get_metadata(inputs) 
+metadata = SDS_download.get_metadata(inputs) 
 
 
 # settings for the shoreline extraction
@@ -68,20 +68,20 @@ settings = {
     # [ONLY FOR ADVANCED USERS] shoreline detection parameters:
     'min_beach_area': 500,     # minimum area (in metres^2) for an object to be labelled as a beach
     'buffer_size': 150,         # radius (in metres) of the buffer around sandy pixels considered in the shoreline detection
-    'min_length_sl': 200,       # minimum length (in metres) of shoreline perimeter to be valid
+    'min_length_sl': 500,       # minimum length (in metres) of shoreline perimeter to be valid
     'cloud_mask_issue': False,  # switch this parameter to True if sand pixels are masked (in black) on many images  
     'dark_sand': False,         # only switch to True if your site has dark sand (e.g. black sand beach)
 }
 
 # [OPTIONAL] preprocess images (cloud masking, pansharpening/down-sampling)
-SDS_preprocess.save_jpg(metadata, settings)
+#SDS_preprocess.save_jpg(metadata, settings)
 #
 #%% 3. Batch shoreline detection
     
 # [OPTIONAL] create a reference shoreline (helps to identify outliers and false detections)
 settings['reference_shoreline'] = SDS_preprocess.get_reference_sl(metadata, settings)
 # set the max distance (in meters) allowed from the reference shoreline for a detected shoreline to be valid
-settings['max_dist_ref'] = 100        
+settings['max_dist_ref'] = 200        
 
 # extract shorelines from all images (also saves output.pkl and shorelines.kml)
 output = SDS_shoreline.extract_shorelines(metadata, settings)	
@@ -113,7 +113,7 @@ with open(os.path.join(filepath, sitename + '_output' + '.pkl'), 'rb') as f:
 
 # there are 3 options to create the transects:
 # - option 1: draw the shore-normal transects along the beach
-# - option 2: load the transect coordinates from a .kml file
+# - option 2: load the transect coordinates from a .geojson file
 # - option 3: create the transects manually by providing the coordinates
 
 # option 1: draw origin of transect first and then a second point to define the orientation
@@ -144,10 +144,23 @@ for i,key in enumerate(cross_distance.keys()):
     ax = fig.add_subplot(gs[i,0])
     ax.grid(linestyle=':', color='0.5')
     ax.set_ylim([-60,60])
-    ax.plot(output['dates'], cross_distance[key]- np.nanmedian(cross_distance[key]), '-^', markersize=6)
+    ax.plot(output['dates'], cross_distance[key]- np.nanmean(cross_distance[key]), '-^', markersize=6)
     ax.set_ylabel('distance [m]', fontsize=12)
     ax.text(0.5,0.95,'Transect ▲' + key, bbox=dict(boxstyle="square", ec='k',fc='w'), ha='center',
             va='top', transform=ax.transAxes, fontsize=14)
 mng = plt.get_current_fig_manager()                                         
 mng.window.showMaximized()    
 fig.set_size_inches([15.76,  8.52])
+
+#%% Export output and cross_distance to CSV
+import pandas as pd
+#full filepath and name for CSV
+csv_path1 = os.path.join(filepath,sitename + '_output_raw.csv')
+csv_path2 = os.path.join(filepath,sitename + '_cross_distance_raw.csv')
+#convert dictionary to pandas dataframe for export to CSV
+data_out1 = pd.DataFrame.from_dict(output)
+data_out2 = pd.DataFrame.from_dict(cross_distance)
+#export dataframe to CSV
+data_out1.to_csv(csv_path1)
+data_out2.to_csv(csv_path2)
+
