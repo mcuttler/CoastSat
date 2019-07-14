@@ -18,7 +18,7 @@
 
     
     # region of interest (longitude, latitude in WGS84), can be loaded from a .kml polygon
-    polygon = SDS_tools.polygon_from_kml(os.path.join(os.getcwd(), 'KMLs','ASHBURTON.kml'))
+    polygon = SDS_tools.polygon_from_kml(os.path.join(os.getcwd(), 'KMLs','EVA.kml'))
                 
     # date range
     dates = ['2013-01-01', '2019-05-01']
@@ -27,7 +27,7 @@
     sat_list = ['S2']
     
     # name of the site
-    sitename = 'ASHBURTON'
+    sitename = 'EVA'
     
     # filepath where data will be stored
     filepath_data = os.path.join(os.getcwd(), 'data')
@@ -75,7 +75,7 @@ metadata = {'S2': metadata['S2']}
         'min_length_sl': 500,       # minimum length (in metres) of shoreline perimeter to be valid
         'cloud_mask_issue': False,  # switch this parameter to True if sand pixels are masked (in black) on many images
         'dark_sand': False,         # only switch to True if your site has dark sand (e.g. black sand beach)
-        'zref': 0   #reference height datum for tidal correction 
+        'zref': 1.5   #reference height datum for tidal correction 
     }
     
     #read additional settings for island info - adds:
@@ -84,7 +84,7 @@ metadata = {'S2': metadata['S2']}
     settings = SDS_island_tools.read_island_info(island_file,settings)
     
     # [OPTIONAL] preprocess images (cloud masking, pansharpening/down-sampling)
-    #SDS_preprocess.save_jpg(metadata, settings)
+#    SDS_preprocess.save_jpg(metadata, settings)
     
     ## [OPTIONAL] create a reference shoreline (helps to identify outliers and false detections); required if using sand_polygon
     settings['reference_shoreline'] = SDS_preprocess.get_reference_sl(metadata, settings)
@@ -163,8 +163,8 @@ metadata = {'S2': metadata['S2']}
     
     #process tide data
     #input tide data is in local time (Australian West Coast, UTC +8 hrs), but code below converts to UTC
-#    tide_file = 'G:\Dropbox\Pilbara Island Remote Sensing\TideData\ExGulf_Tides.txt'
-    tide_file = 'P:\BROWNE_ReefIslandResilience\Data\Tides\ExGulf_Tides.txt'
+
+    tide_file = 'P:\CUTTLER_ReefIslandResilience\Data\Tides\ExGulf_Tides.txt'
     tide, output_corrected = SDS_island_tools.process_tide_data(tide_file, output)    
 
     cross_distance_corrected = SDS_island_tools.tide_correct(cross_distance,tide,settings)
@@ -173,8 +173,8 @@ metadata = {'S2': metadata['S2']}
     
     output_corrected = SDS_island_tools.tide_correct_sand_polygon(cross_distance_corrected, output_corrected, settings)
     
-    
-    
+        #%% save jpg with image and island shoreline
+    SDS_preprocess.save_jpg_shoreline(metadata, settings, output)
     
     
     

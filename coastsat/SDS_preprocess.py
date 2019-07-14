@@ -509,7 +509,7 @@ def create_jpg(im_ms, cloud_mask, date, satname, filepath):
     
     # make figure (just RGB)
     fig = plt.figure()
-    fig.set_size_inches([18,9])
+    fig.set_size_inches([9,9])
     fig.set_tight_layout(True)
     ax1 = fig.add_subplot(111)
     ax1.axis('off')
@@ -542,7 +542,50 @@ def create_jpg(im_ms, cloud_mask, date, satname, filepath):
     fig.savefig(os.path.join(filepath,
                              date + '_' + satname + '.jpg'), dpi=150) 
     plt.close()
-      
+ 
+def create_jpg_shoreline(im_ms, cloud_mask, date, satname, filepath,sl):
+    """
+    Saves a .jpg file with the RGB image as well as the NIR and SWIR1 grayscale images.
+    This functions can be modified to obtain different visualisations of the multispectral images.
+    
+    MC UWA 2019
+
+    Arguments:
+    -----------
+        im_ms: np.array
+            3D array containing the pansharpened/down-sampled bands (B,G,R,NIR,SWIR1)
+        cloud_mask: np.array
+            2D cloud mask with True where cloud pixels are
+        date: str
+            String containing the date at which the image was acquired
+        satname: str
+            name of the satellite mission (e.g., 'L5')
+        
+    Returns:
+    -----------
+        Saves a .jpg image corresponding to the preprocessed satellite image
+            
+    """
+
+    # rescale image intensity for display purposes
+    im_RGB = rescale_image_intensity(im_ms[:,:,[2,1,0]], cloud_mask, 99.9)
+    
+    # make figure (just RGB)
+    fig = plt.figure()
+    fig.set_size_inches([9,9])
+    fig.set_tight_layout(True)
+    ax1 = fig.add_subplot(111)
+    ax1.axis('off')
+    ax1.imshow(im_RGB)
+    ax1.set_title(date + '   ' + satname, fontsize=16)
+    
+    plt.plot(sl[:,0],sl[:,1],'k.','markersize',12)
+    
+    # save figure
+    plt.rcParams['savefig.jpeg_quality'] = 100
+    fig.savefig(os.path.join(filepath,
+                             date + '_' + satname + '.jpg'), dpi=150) 
+    plt.close()     
     
 def save_jpg(metadata, settings):
     """
@@ -596,8 +639,67 @@ def save_jpg(metadata, settings):
             if cloud_cover > cloud_thresh or cloud_cover == 1:
                 continue
             # save .jpg with date and satellite in the title
-            date = filenames[i][:19]
+            date = filenames[i][:19]            
             create_jpg(im_ms, cloud_mask, date, satname, filepath_jpg)
+            
+    # print the location where the images have been saved
+    print('Satellite images saved as .jpg in ' + os.path.join(filepath_data, sitename,
+                                                    'jpg_files', 'preprocessed'))
+def save_jpg_shoreline(metadata, settings, output):
+    """
+    Saves a .jpg image with shoreline plotted on top
+    
+    MC UWA 2018
+
+    Arguments:
+    -----------
+        metadata: dict
+            contains all the information about the satellite images that were downloaded
+        settings: dict
+            contains the following fields:
+        cloud_thresh: float
+            value between 0 and 1 indicating the maximum cloud fraction in the image that is accepted
+        sitename: string
+            name of the site (also name of the folder where the images are stored)
+        cloud_mask_issue: boolean
+            True if there is an issue with the cloud mask and sand pixels are being masked on the images
+                    
+    Returns:
+    -----------
+            
+    """
+    
+    sitename = settings['inputs']['sitename']
+    cloud_thresh = settings['cloud_thresh']
+    filepath_data = settings['inputs']['filepath']
+    
+    # create subfolder to store the jpg files
+    filepath_jpg = os.path.join(filepath_data, sitename, 'jpg_files', 'jpg_shorelines')
+    if not os.path.exists(filepath_jpg):      
+            os.makedirs(filepath_jpg)
+            
+    # loop through satellite list
+    for satname in metadata.keys():
+        
+        filepath = SDS_tools.get_filepath(settings['inputs'],satname)
+        filenames = output['filename']
+            
+        # loop through images
+        for i in range(len(filenames)):
+            # image filename
+            fn = SDS_tools.get_filenames(filenames[i],filepath, satname)
+            # read and preprocess image
+            im_ms, georef, cloud_mask, im_extra, imQA = preprocess_single(fn, satname, settings['cloud_mask_issue'])
+            # calculate cloud cover
+            cloud_cover = np.divide(sum(sum(cloud_mask.astype(int))),
+                                    (cloud_mask.shape[0]*cloud_mask.shape[1]))
+            # skip image if cloud cover is above threshold
+            if cloud_cover > cloud_thresh or cloud_cover == 1:
+                continue
+            # save .jpg with date and satellite in the title
+            date = filenames[i][:19]
+            sl = output['sand_points'][i]
+            create_jpg_shoreline(im_ms, cloud_mask, date, satname, filepath_jpg,sl)
             
     # print the location where the images have been saved
     print('Satellite images saved as .jpg in ' + os.path.join(filepath_data, sitename,
