@@ -18,7 +18,7 @@
 
     
     # region of interest (longitude, latitude in WGS84), can be loaded from a .kml polygon
-    polygon = SDS_tools.polygon_from_kml(os.path.join(os.getcwd(), 'KMLs','EVA.kml'))
+    polygon = SDS_tools.polygon_from_kml(os.path.join(os.getcwd(), 'KMLs','FLY.kml'))
                 
     # date range
     dates = ['2013-01-01', '2019-05-01']
@@ -27,7 +27,7 @@
     sat_list = ['S2']
     
     # name of the site
-    sitename = 'EVA'
+    sitename = 'FLY'
     
     # filepath where data will be stored
     filepath_data = os.path.join(os.getcwd(), 'data')
@@ -53,7 +53,7 @@
 # if you have already downloaded the images, just load the metadata file
 metadata = SDS_download.get_metadata(inputs)   
 #for only S2 imagery  
-metadata = {'S2': metadata['S2']}
+#metadata = {'S2': metadata['S2']}
 
 #print('Check that S2 dates match range of tide data!')
     
@@ -67,6 +67,7 @@ metadata = {'S2': metadata['S2']}
         # quality control:
         'check_detection': False,    # if True, shows each shoreline detection to the user for validation
         'check_detection_sand_poly': True, #if True, uses sand polygon for detection and shows user for validation 
+        'save_figure': False,        # if True, saves a figure showing the mapped shoreline for each image
         # add the inputs defined previously
         'inputs': inputs,
         # [ONLY FOR ADVANCED USERS] shoreline detection parameters:
@@ -75,7 +76,7 @@ metadata = {'S2': metadata['S2']}
         'min_length_sl': 500,       # minimum length (in metres) of shoreline perimeter to be valid
         'cloud_mask_issue': False,  # switch this parameter to True if sand pixels are masked (in black) on many images
         'dark_sand': False,         # only switch to True if your site has dark sand (e.g. black sand beach)
-        'zref': 1.5   #reference height datum for tidal correction 
+        'zref': 0   #reference height datum for tidal correction 
     }
     
     #read additional settings for island info - adds:
@@ -153,6 +154,10 @@ metadata = {'S2': metadata['S2']}
     #add some print out to show percentage of shorelines processed 
     cross_distance = SDS_island_transects.compute_intersection(output, transects, settings)            
     
+    #load intersections if already done
+#    filepath = os.path.join(inputs['filepath'], sitename)
+#    with open(os.path.join(filepath, sitename + '_output' + '.pkl'), 'rb') as f:
+#        output = pickle.load(f) 
    
     #%% 5. tide correction for transects and sand polygon
     
@@ -173,8 +178,7 @@ metadata = {'S2': metadata['S2']}
     
     output_corrected = SDS_island_tools.tide_correct_sand_polygon(cross_distance_corrected, output_corrected, settings)
     
-        #%% save jpg with image and island shoreline
-    SDS_preprocess.save_jpg_shoreline(metadata, settings, output)
+
     
     
     

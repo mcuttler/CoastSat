@@ -462,9 +462,12 @@ def tide_correct(cross_distance, tide, settings):
             cross_distance_corrected[key] = transect_corrected
         #save cross_distance dictionary to CSV
         filepath = os.path.join(os.getcwd(), 'data', settings['inputs']['sitename'])
-        csv_path = os.path.join(filepath, settings['inputs']['sitename'] + '_cross_distance_tide_corrected_15m.csv')
+        csv_path = os.path.join(filepath, settings['inputs']['sitename'] + '_cross_distance_tide_corrected.csv')
         data_out = pd.DataFrame.from_dict(cross_distance_corrected)    
         data_out.to_csv(csv_path)
+        
+        with open(os.path.join(filepath, settings['inputs']['sitename'] + '_cross_distance_tide_corrected.pkl'), 'wb') as f:
+            pickle.dump(cross_distance_corrected, f) 
     
     else:
         print('ERROR - time series not same lenght!')
@@ -625,7 +628,7 @@ def tide_correct_sand_polygon(cross_distance_corrected, output_corrected, settin
     sitename = settings['inputs']['sitename']
     filepath_data = settings['inputs']['filepath']
     filepath = os.path.join(filepath_data, sitename)
-    with open(os.path.join(filepath, sitename + '_output_tide_corrected_15m.pkl'), 'wb') as f:
+    with open(os.path.join(filepath, sitename + '_output_tide_corrected.pkl'), 'wb') as f:
         pickle.dump(output_corrected, f)
     
     
@@ -634,10 +637,10 @@ def tide_correct_sand_polygon(cross_distance_corrected, output_corrected, settin
     # set projection
     gdf.crs = {'init':'epsg:'+str(settings['output_epsg'])}
     # save as geojson    
-    gdf.to_file(os.path.join(filepath, sitename + '_output_corrected_15m.geojson'), driver='GeoJSON', encoding='utf-8')
+    gdf.to_file(os.path.join(filepath, sitename + '_output_tide_corrected.geojson'), driver='GeoJSON', encoding='utf-8')
         
     #export output data to csv file  
-    csv_path = os.path.join(filepath,sitename + '_sand_polygons_tide_corrected_15m.csv')
+    csv_path = os.path.join(filepath,sitename + '_sand_polygons_tide_corrected.csv')
     data_out = pd.DataFrame.from_dict(output_corrected)
     
     data_out.to_csv(csv_path)

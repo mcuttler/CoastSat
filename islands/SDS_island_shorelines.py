@@ -726,6 +726,8 @@ def extract_shorelines(metadata, settings):
         output_sand_perimeter = []  #perimieter of sandy pixels
         output_sand_centroid = []   #coordinates center of mass of sandy pixels
         output_sand_points = []     #coordinates of sandy pixels
+        output_sand_eccentricity = [] #measure of sand area eccentricity
+        output_sand_orientation = []  #orientation of major axis
         
         # load classifiers and convert settings['min_beach_area'] and settings['buffer_size'] 
         # from metres to pixels
@@ -842,6 +844,18 @@ def extract_shorelines(metadata, settings):
             sand_centroid = np.array(sand_polygon.centroid.coords)
             sand_points = np.array(sand_polygon.exterior.coords)
             
+            label_img = measure.label(im_binary_sand_closed)
+            regions = measure.regionprops(label_img)
+            #only keep largest region (there should only be one)
+            if len(regions)>1:
+                bbox = []
+                for j in range(len(regions)):
+                    bbox.append(regions[j]['bbox_area'])
+                sand_eccentricity = regions[np.argmax(bbox)]['eccentricity']
+                sand_orientation = regions[np.argmax(bbox)]['orientation']
+            else:                    
+                sand_eccentricity = regions[0]['eccentricity']
+                sand_orientation = regions[0]['orientation']
             #######################################################################################
             ####################################################################################### 
             
@@ -917,6 +931,8 @@ def extract_shorelines(metadata, settings):
             output_sand_perimeter.append(sand_perimeter)
             output_sand_centroid.append(sand_centroid)
             output_sand_points.append(sand_points)
+            output_sand_eccentricity.append(sand_eccentricity)
+            output_sand_orientation.append(sand_orientation)
             
         # create dictionnary of output
         output[satname] = {
@@ -929,7 +945,9 @@ def extract_shorelines(metadata, settings):
                 'sand_area': output_sand_area,
                 'sand_perimeter': output_sand_perimeter,
                 'sand_centroid': output_sand_centroid,
-                'sand_points': output_sand_points,                
+                'sand_points': output_sand_points,
+                'sand_eccentricity': output_sand_eccentricity,
+                'sand_orientation': output_sand_orientation,                
                 'idx': output_idxkeep
                 }
         print('')

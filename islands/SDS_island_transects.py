@@ -346,7 +346,11 @@ def compute_intersection(output, transects, settings):
     filepath = os.path.join(os.getcwd(), 'data', settings['inputs']['sitename'])
     csv_path = os.path.join(filepath, settings['inputs']['sitename'] + '_cross_distance.csv')
     data_out = pd.DataFrame.from_dict(cross_dist)    
-    data_out.to_csv(csv_path)
+    data_out.to_csv(csv_path)    
+
+#    filepath = os.path.join(filepath_data, sitename)
+    with open(os.path.join(filepath, settings['inputs']['sitename'] + '_cross_distance.pkl'), 'wb') as f:
+        pickle.dump(cross_dist, f) 
     
     return cross_dist
 
