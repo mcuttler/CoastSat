@@ -193,7 +193,7 @@ from coastsat import SDS_tools, SDS_preprocess
             fig = plt.figure()
             im_RGB = SDS_preprocess.rescale_image_intensity(im_ms[:,:,[2,1,0]], cloud_mask, 99.9)
             plt.imshow(im_RGB)
-            plt.title(output['dates'][i].strftime('%Y %m %d'))
+            plt.title(output['dates'][i].strftime('%Y_%m_%d'))
     
             for props in regions:                       
                 y0, x0 = props.centroid
@@ -207,8 +207,10 @@ from coastsat import SDS_tools, SDS_preprocess
                 plt.plot((x0, x2), (y0, y2), '-b', linewidth=2.5)
                 plt.plot(x0, y0, '.r', markersize=15)
                 plt.text(50,25,'Orientation = ' + str(round(np.degrees(sand_orientation),2)), color = 'white',fontweight = 'bold')
-                plt.savfig(                        )  
-                plt.close(fig)
+                fig_file = 'FLY_'+output['dates'][i].strftime('%Y_%m_%d')
+                fig_path = 'D:\\testing_orientation'
+                fig.savefig(os.path.join(fig_path, fig_file + '.jpg'))
+                plt.close()
             
 
 #plt.figure()

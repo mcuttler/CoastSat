@@ -534,6 +534,8 @@ def process_tide_data(tide_file, output):
     idx = []
     sand_area = []
     sand_centroid = []
+    sand_eccentricity = []
+    sand_orientation = []
     sand_perimeter = []
     sand_points = []
     satname = []
@@ -548,6 +550,8 @@ def process_tide_data(tide_file, output):
         idx.append(output['idx'][int(tide_nanidx[i])])
         sand_area.append(output['sand_area'][int(tide_nanidx[i])])
         sand_centroid.append(output['sand_centroid'][int(tide_nanidx[i])])
+        sand_eccentricity.append(output['sand_eccentricity'][int(tide_nanidx[i])])
+        sand_orientation.append(output['sand_orientation'][int(tide_nanidx[i])])
         sand_perimeter.append(output['sand_perimeter'][int(tide_nanidx[i])])
         sand_points.append(output['sand_points'][int(tide_nanidx[i])])
         satname.append(output['satname'][int(tide_nanidx[i])])
@@ -561,6 +565,8 @@ def process_tide_data(tide_file, output):
                         'idx': idx, 
                         'sand_area': sand_area,
                         'sand_centroid': sand_centroid,
+                        'sand_eccentricity': sand_eccentricity,
+                        'sand_orientation': sand_orientation,
                         'sand_perimeter': sand_perimeter,
                         'sand_points': sand_points,
                         'satname': satname,
@@ -640,7 +646,7 @@ def tide_correct_sand_polygon(cross_distance_corrected, output_corrected, settin
     gdf.to_file(os.path.join(filepath, sitename + '_output_tide_corrected.geojson'), driver='GeoJSON', encoding='utf-8')
         
     #export output data to csv file  
-    csv_path = os.path.join(filepath,sitename + '_sand_polygons_tide_corrected.csv')
+    csv_path = os.path.join(filepath,sitename + '_output_tide_corrected.csv')
     data_out = pd.DataFrame.from_dict(output_corrected)
     
     data_out.to_csv(csv_path)

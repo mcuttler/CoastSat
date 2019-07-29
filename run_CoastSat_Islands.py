@@ -18,16 +18,16 @@
 
     
     # region of interest (longitude, latitude in WGS84), can be loaded from a .kml polygon
-    polygon = SDS_tools.polygon_from_kml(os.path.join(os.getcwd(), 'KMLs','FLY.kml'))
+    polygon = SDS_tools.polygon_from_kml(os.path.join(os.getcwd(), 'KMLs','EVA.kml'))
                 
     # date range
-    dates = ['2013-01-01', '2019-05-01']
+    dates = ['2013-01-01', '2019-07-01']
     
     # satellite missions
     sat_list = ['S2']
     
     # name of the site
-    sitename = 'FLY'
+    sitename = 'EVA'
     
     # filepath where data will be stored
     filepath_data = os.path.join(os.getcwd(), 'data')
@@ -91,24 +91,24 @@ metadata = SDS_download.get_metadata(inputs)
     settings['reference_shoreline'] = SDS_preprocess.get_reference_sl(metadata, settings)
     ### set the max distance (in meters) allowed from the reference shoreline for a detected shoreline to be valid
     settings['max_dist_ref'] = 100        
-    ##
-    ### extract shorelines from all images (also saves output.pkl and shorelines.kml)
-#    output = SDS_island_shorelines.extract_shorelines(metadata, settings)
+    #
+    ## extract shorelines from all images (also saves output.pkl and shorelines.kml)
+    output = SDS_island_shorelines.extract_shorelines(metadata, settings)
     
     #plot time series of beach area
-#    fig = plt.figure()
-#    plt.plot(output['dates'],output['sand_area'],'b-x')
-#    plt.grid('on')
-#    plt.xlabel('Date')
-#    plt.ylabel('Sub-aerial sand area (m^2)')
-#    fig.set_size_inches([8,  4])        
+    fig = plt.figure()
+    plt.plot(output['dates'],output['sand_area'],'b-x')
+    plt.grid('on')
+    plt.xlabel('Date')
+    plt.ylabel('Sub-aerial sand area (m^2)')
+    fig.set_size_inches([8,  4])        
     
     #%% 4. Shoreline analysis
     
     # if you have already mapped the shorelines, load the output.pkl file
-    filepath = os.path.join(inputs['filepath'], sitename)
-    with open(os.path.join(filepath, sitename + '_output' + '.pkl'), 'rb') as f:
-        output = pickle.load(f) 
+#    filepath = os.path.join(inputs['filepath'], sitename)
+#    with open(os.path.join(filepath, sitename + '_output' + '.pkl'), 'rb') as f:
+#        output = pickle.load(f) 
     
     # now we have to define cross-shore transects over which to quantify the shoreline changes
     # each transect is defined by two points, its origin and a second point that defines its orientation
@@ -169,7 +169,7 @@ metadata = SDS_download.get_metadata(inputs)
     #process tide data
     #input tide data is in local time (Australian West Coast, UTC +8 hrs), but code below converts to UTC
 
-    tide_file = 'P:\CUTTLER_ReefIslandResilience\Data\Tides\ExGulf_Tides.txt'
+    tide_file = 'P:\CUTTLER_ReefIslandResilience\Data\Tides\ExGulf_Tides_v2.txt'
     tide, output_corrected = SDS_island_tools.process_tide_data(tide_file, output)    
 
     cross_distance_corrected = SDS_island_tools.tide_correct(cross_distance,tide,settings)
