@@ -783,10 +783,10 @@ def extract_shorelines(metadata, settings):
         pickle.dump(output, f)
 
     # save output into a gdb.GeoDataFrame
-    gdf = SDS_tools.output_to_gdf(output)
-    # set projection
-    gdf.crs = {'init':'epsg:'+str(settings['output_epsg'])}
-    # save as geojson    
-    gdf.to_file(os.path.join(filepath, sitename + '_output.geojson'), driver='GeoJSON', encoding='utf-8')
+#    gdf = SDS_tools.output_to_gdf(output)
+#    # set projection
+#    gdf.crs = {'init':'epsg:'+str(settings['output_epsg'])}
+#    # save as geojson    
+#    gdf.to_file(os.path.join(filepath, sitename + '_output.geojson'), driver='GeoJSON', encoding='utf-8')
 
     return output

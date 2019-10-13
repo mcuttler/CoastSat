@@ -337,10 +337,10 @@ def compute_intersection(output, transects, settings):
     chainage['std'] = chainage_mtx[:,:,5]
     chainage['idx_points'] = idx_points
         
-    # only return the median
+    # only return the max for islands 
     cross_dist = dict([])
     for j,key in enumerate(list(transects.keys())): 
-        cross_dist[key] = chainage['median'][:,j]    
+        cross_dist[key] = chainage['max'][:,j]    
     
     #save cross_distance dictionary to CSV
     filepath = os.path.join(os.getcwd(), 'data', settings['inputs']['sitename'])

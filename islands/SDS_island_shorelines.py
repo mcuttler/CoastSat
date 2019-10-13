@@ -8,6 +8,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import pdb
+import math
 
 # image processing modules
 import skimage.filters as filters
@@ -537,8 +538,8 @@ def show_detection(im_ms, cloud_mask, im_labels, shoreline,image_epsg, georef,
 
     return skip_image
 
-def show_detection_sand_poly(im_ms, cloud_mask, im_binary_sand, im_binary_sand_closed, sand_contours,
-                   settings, date, satname):
+def show_detection_sand_poly(im_ms, cloud_mask, im_labels, im_binary_sand, im_binary_sand_closed, sand_contours,
+                   settings, date, satname, regions):
     """
     Shows the detected sand polygons and boundary of this polygon (pseudo shoreline) to the user for visual quality control. The user can select "keep"
     if the shoreline detection is correct or "skip" if it is incorrect. 
@@ -613,18 +614,52 @@ def show_detection_sand_poly(im_ms, cloud_mask, im_binary_sand, im_binary_sand_c
     ax1.set_title(sitename + '    ' + date + '     ' + satname, fontweight='bold', fontsize=16)
 
     # create image 2 (sandy pixels)
-    ax2.imshow(im_binary_sand,cmap='gray')
+#    ax2.imshow(im_binary_sand,cmap='gray')
+#    ax2.axis('off')
+#    ax2.set_title('sand pixels', fontweight='bold')
+    # create image 2 (classification)
+    im_class = np.copy(im_RGB)
+    cmap = cm.get_cmap('tab20c')
+    colorpalette = cmap(np.arange(0,13,1))
+    colours = np.zeros((3,4))
+    colours[0,:] = colorpalette[5]
+    colours[1,:] = np.array([204/255,1,1,1])
+    colours[2,:] = np.array([0,91/255,1,1])
+    for k in range(0,im_labels.shape[2]):
+        im_class[im_labels[:,:,k],0] = colours[k,0]
+        im_class[im_labels[:,:,k],1] = colours[k,1]
+        im_class[im_labels[:,:,k],2] = colours[k,2]
+        
+    ax2.imshow(im_class)    
     ax2.axis('off')
-    ax2.set_title('sand pixels', fontweight='bold')
+    orange_patch = mpatches.Patch(color=colours[0,:], label='sand')
+    white_patch = mpatches.Patch(color=colours[1,:], label='whitewater')
+    blue_patch = mpatches.Patch(color=colours[2,:], label='water')
+    black_line = mlines.Line2D([],[],color='k',linestyle='-', label='shoreline')
+    ax2.legend(handles=[orange_patch,white_patch,blue_patch, black_line],
+               bbox_to_anchor=(1, 0.5), fontsize=10)
+    ax2.set_title(date, fontweight='bold', fontsize=16)
     
     # create image 3 (closed sand polygon)
-    ax3.imshow(im_binary_sand_closed, cmap='gray')
-    ax3.axis('off')
-    ax3.set_title('sand polygon', fontweight='bold')
+    ax3.imshow(im_RGB)
+    for props in regions:                       
+        y0, x0 = props.centroid
+        orientation = props.orientation
+        x1 = x0 + math.cos(orientation) * 0.5* props.major_axis_length
+        y1 = y0 - math.sin(orientation) * 0.5* props.major_axis_length
+        x2 = x0 - math.cos(orientation) * 0.5* props.major_axis_length
+        y2 = y0 + math.sin(orientation) * 0.5* props.major_axis_length
+        plt.plot((x0, x1), (y0, y1), '-b', linewidth=2.5)
+        plt.plot((x0, x2), (y0, y2), '-b', linewidth=2.5)
+        plt.plot(x0, y0, '.r', markersize=15)
+#        plt.text(50,25,'Orientation = ' + str(round(np.degrees(sand_orientation),2)), color = 'white',fontweight = 'bold')
+#    ax3.imshow(im_binary_sand_closed, cmap='gray')
+#    ax3.axis('off')
+#    ax3.set_title('sand polygon', fontweight='bold')
     
     #plot sand contours on each sub plot
     for k in range(len(sand_contours)):
-                ax3.plot(sand_contours[k][:,1], sand_contours[k][:,0], 'r-', linewidth=2.5)
+#                ax3.plot(sand_contours[k][:,1], sand_contours[k][:,0], 'r-', linewidth=2.5)
                 ax2.plot(sand_contours[k][:,1], sand_contours[k][:,0], 'r-', linewidth=2.5)
                 ax1.plot(sand_contours[k][:,1], sand_contours[k][:,0], 'k--', linewidth=1.5)
 
@@ -901,8 +936,8 @@ def extract_shorelines(metadata, settings):
             
             if settings['check_detection_sand_poly']:
                 date = filenames[i][:18]
-                skip_image = show_detection_sand_poly(im_ms, cloud_mask, im_binary_sand, im_binary_sand_closed, 
-                                                      sand_contours, settings, date, satname)
+                skip_image = show_detection_sand_poly(im_ms, cloud_mask, im_labels, im_binary_sand, im_binary_sand_closed, 
+                                                      sand_contours, settings, date, satname, regions)
                 # if user decides to skip the image
                 if skip_image:
                     continue
@@ -961,11 +996,11 @@ def extract_shorelines(metadata, settings):
         pickle.dump(output, f)        
     
     # save output into a gdb.GeoDataFrame
-    gdf = SDS_tools.output_to_gdf(output)
-    # set projection
-    gdf.crs = {'init':'epsg:'+str(settings['output_epsg'])}
-    # save as geojson    
-    gdf.to_file(os.path.join(filepath, sitename + '_output.geojson'), driver='GeoJSON', encoding='utf-8')
+#    gdf = SDS_tools.output_to_gdf(output)
+#    # set projection
+#    gdf.crs = {'init':'epsg:'+str(settings['output_epsg'])}
+#    # save as geojson    
+#    gdf.to_file(os.path.join(filepath, sitename + '_output.geojson'), driver='GeoJSON', encoding='utf-8')
 
     # save output as kml for GIS applications
 #    kml = simplekml.Kml()
