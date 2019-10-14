@@ -818,13 +818,23 @@ def extract_shorelines(metadata, settings):
             # fill the interior of the ring of sand around the island
             im_binary_sand_closed = morphology.remove_small_holes(im_binary_sand, area_threshold=3000, connectivity=1)
             # vectorise the contours
-            sand_contours = measure.find_contours(im_binary_sand_closed, 0.5)
+            if satname == 'S2':
+                thresh = 0.5
+            else:
+                thresh = 0.95
+            
+            sand_contours = measure.find_contours(im_binary_sand_closed, thresh)
             
             # if several contours, it means there is a gap --> merge sand and non-classified pixels
             if len(sand_contours) > 1:
                 im_binary_sand = np.logical_or(im_classif == 1, im_classif == 0)
                 im_binary_sand_closed = morphology.remove_small_holes(im_binary_sand, area_threshold=3000, connectivity=1)
-                sand_contours = measure.find_contours(im_binary_sand_closed, 0.5)
+                if satname == 'S2':
+                    thresh = 0.5
+                else: 
+                    thresh = 0.95
+                    
+                sand_contours = measure.find_contours(im_binary_sand_closed, thresh)
                 # if there are still more than one contour, only keep the one with more points
                 if len(sand_contours) > 1:
                     n_points = []
