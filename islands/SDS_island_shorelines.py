@@ -786,6 +786,7 @@ def extract_shorelines(metadata, settings):
             max_dist_ref_pixels = np.ceil(settings['max_dist_ref']/pixel_size)
         # loop through the images
         for i in range(len(filenames)):
+            print(filenames[i])
             print('\r%s:   %d%%' % (satname,int(((i+1)/len(filenames))*100)), end='')
 
             # get image filename
@@ -845,24 +846,27 @@ def extract_shorelines(metadata, settings):
                     # convert to world coordinates
                     sand_contours_world = SDS_tools.convert_pix2world(sand_contours[0],georef)
                     sand_contours_coords = SDS_tools.convert_epsg(sand_contours_world, image_epsg, settings['output_epsg'])[:,:-1]               
-                    # make a shapely polygon
-                    linear_ring = LinearRing(coordinates=sand_contours_coords)
-                    sand_polygon = Polygon(shell=linear_ring, holes=None)
+                    # make a shapely polygon 
+                    if len(sand_contours_coords)>=3:
+                        linear_ring = LinearRing(coordinates=sand_contours_coords[~np.isnan(sand_contours_coords[:,0])])
+                        sand_polygon = Polygon(shell=linear_ring, holes=None)
                 else:    
                     # convert to world coordinates
                     sand_contours_world = SDS_tools.convert_pix2world(sand_contours[0],georef)
                     sand_contours_coords = SDS_tools.convert_epsg(sand_contours_world, image_epsg, settings['output_epsg'])[:,:-1]               
                     # make a shapely polygon
-                    linear_ring = LinearRing(coordinates=sand_contours_coords)
-                    sand_polygon = Polygon(shell=linear_ring, holes=None)
+                    if len(sand_contours_coords)>=3:
+                        linear_ring = LinearRing(coordinates=sand_contours_coords[~np.isnan(sand_contours_coords[:,0])])
+                        sand_polygon = Polygon(shell=linear_ring, holes=None)
                                       
             else:    
                 # convert to world coordinates
                 sand_contours_world = SDS_tools.convert_pix2world(sand_contours[0],georef)
                 sand_contours_coords = SDS_tools.convert_epsg(sand_contours_world, image_epsg, settings['output_epsg'])[:,:-1]               
                 # make a shapely polygon
-                linear_ring = LinearRing(coordinates=sand_contours_coords)
-                sand_polygon = Polygon(shell=linear_ring, holes=None)
+                if len(sand_contours_coords)>=3:
+                    linear_ring = LinearRing(coordinates=sand_contours_coords[~np.isnan(sand_contours_coords[:,0])])
+                    sand_polygon = Polygon(shell=linear_ring, holes=None)
             
             # check if perimeter of polygon matches with reference shoreline
             # if much longer (1.5 times) then also merge sand and non-classified pixels
@@ -880,8 +884,9 @@ def extract_shorelines(metadata, settings):
                 sand_contours_world = SDS_tools.convert_pix2world(sand_contours[0],georef)
                 sand_contours_coords = SDS_tools.convert_epsg(sand_contours_world, image_epsg, settings['output_epsg'])[:,:-1]               
                 # make a shapely polygon
-                linear_ring = LinearRing(coordinates=sand_contours_coords)
-                sand_polygon = Polygon(shell=linear_ring, holes=None)
+                if len(sand_contours_coords)>=3:
+                    linear_ring = LinearRing(coordinates=sand_contours_coords[~np.isnan(sand_contours_coords[:,0])])
+                    sand_polygon = Polygon(shell=linear_ring, holes=None)
                 
             # calculate the attributes of sand polygon
             sand_area = sand_polygon.area

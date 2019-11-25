@@ -23,16 +23,16 @@ from coastsat import SDS_download, SDS_preprocess, SDS_shoreline, SDS_tools, SDS
 #            [151.301454, -33.700754]]]
 # can also be loaded from a .kml polygon
 #kml_polygon = os.path.join(os.getcwd(), 'examples', 'NARRA_polygon.kml')
-polygon = SDS_tools.polygon_from_kml(os.path.join(os.getcwd(), 'KMLs','LEARMONTH.kml'))
+polygon = SDS_tools.polygon_from_kml(os.path.join(os.getcwd(), 'KMLs','DELAMBRE.kml'))
        
 # date range
-dates = ['2019-08-01', '2019-09-01']
+dates = ['2019-01-01', '2019-10-01']
 
 # satellite missions
-sat_list = ['S2']
+sat_list = ['L8','S2']
 
 # name of the site
-sitename = 'LEARMONTH'
+sitename = 'DELAMBRE'
 
 # filepath where data will be stored
 filepath_data = os.path.join(os.getcwd(), 'data')
@@ -49,10 +49,10 @@ inputs = {
 #%% 2. Retrieve images and save
 
 # retrieve satellite images from GEE
-metadata = SDS_download.retrieve_images(inputs)
+#metadata = SDS_download.retrieve_images(inputs)
 
 # if you have already downloaded the images, just load the metadata file
-#metadata = SDS_download.get_metadata(inputs) 
+metadata = SDS_download.get_metadata(inputs) 
 
 
 # settings for the shoreline extraction
@@ -74,7 +74,7 @@ settings = {
 }
 
 # [OPTIONAL] preprocess images (cloud masking, pansharpening/down-sampling)
-SDS_preprocess.save_jpg(metadata, settings)
+#SDS_preprocess.save_jpg(metadata, settings)
 #
 #%% 3. Batch shoreline detection
     
@@ -124,11 +124,11 @@ transects = SDS_transects.draw_transects(output, settings)
 #transects = SDS_tools.transects_from_geojson(geojson_file)
 
 # option 3: create the transects by manually providing the coordinates of two points 
-transects = dict([])
-transects['Transect 1'] = np.array([[382056.45, 6459212.94], [381947.55, 6459307.8]])
-transects['Transect 2'] = np.array([[382143.34, 6459903.1], [381942.46, 6459944.13]])
-transects['Transect 3'] = np.array([[382255.03, 6460993.12], [382030.6, 6461042.08]])
-transects['Transect 4'] = np.array([[382342.38, 6461515.21], [382180.26, 6461536.07]])   
+#transects = dict([])
+#transects['Transect 1'] = np.array([[382056.45, 6459212.94], [381947.55, 6459307.8]])
+#transects['Transect 2'] = np.array([[382143.34, 6459903.1], [381942.46, 6459944.13]])
+#transects['Transect 3'] = np.array([[382255.03, 6460993.12], [382030.6, 6461042.08]])
+#transects['Transect 4'] = np.array([[382342.38, 6461515.21], [382180.26, 6461536.07]])   
 
 
 
@@ -146,7 +146,7 @@ for i,key in enumerate(cross_distance.keys()):
         continue
     ax = fig.add_subplot(gs[i,0])
     ax.grid(linestyle=':', color='0.5')
-    ax.set_ylim([-60,60])
+    ax.set_ylim([-120,120])
     ax.plot(output['dates'], cross_distance[key]- np.nanmean(cross_distance[key]), '-^', markersize=6)
     ax.set_ylabel('distance [m]', fontsize=12)
     ax.text(0.5,0.95,'Transect ▲' + key, bbox=dict(boxstyle="square", ec='k',fc='w'), ha='center',

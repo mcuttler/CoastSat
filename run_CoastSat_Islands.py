@@ -18,16 +18,16 @@
 
     
     # region of interest (longitude, latitude in WGS84), can be loaded from a .kml polygon
-    polygon = SDS_tools.polygon_from_kml(os.path.join(os.getcwd(), 'KMLs','ASHBURTON.kml'))
+    polygon = SDS_tools.polygon_from_kml(os.path.join(os.getcwd(), 'KMLs','THEVENARD.kml'))
                 
     # date range
-    dates = ['2008-01-01', '2019-07-01']
+    dates = ['2019-01-15', '2019-10-01']
     
     # satellite missions
-    sat_list = ['L7','L8','S2']
+    sat_list = ['L8','S2']
     
     # name of the site
-    sitename = 'ASHBURTON'
+    sitename = 'THEVENARD'
     
     # filepath where data will be stored
     filepath_data = os.path.join(os.getcwd(), 'data')
@@ -60,7 +60,7 @@ metadata = SDS_download.get_metadata(inputs)
 # settings for the shoreline extraction
 settings = { 
         # general parameters:
-        'cloud_thresh': 0.5,        # threshold on maximum cloud cover
+        'cloud_thresh': 0.25,        # threshold on maximum cloud cover
         'output_epsg': 28350,       # epsg code of spatial reference system desired for the output - 28350 = GDA94 zone 50
         # quality control:
         'check_detection': False,    # if True, shows each shoreline detection to the user for validation
@@ -80,11 +80,11 @@ settings = {
 #read additional settings for island info - adds:
 #settings['island_center'] = center coordinates of island
 #settings['beach_slope'] = slope for tidal correction 
-settings = SDS_island_tools.read_island_info(island_file,settings)
+#settings = SDS_island_tools.read_island_info(island_file,settings)
     
-#[OPTIONAL] preprocess images (cloud masking, pansharpening/down-sampling)
-#SDS_preprocess.save_jpg(metadata, settings)
-    
+
+ #[OPTIONAL] preprocess images (cloud masking, pansharpening/down-sampling)
+#SDS_preprocess.save_jpg(metadata, settings)   
     #%%
     ## [OPTIONAL] create a reference shoreline (helps to identify outliers and false detections); required if using sand_polygon
     settings['reference_shoreline'] = SDS_preprocess.get_reference_sl(metadata, settings)
@@ -95,12 +95,24 @@ settings = SDS_island_tools.read_island_info(island_file,settings)
     output = SDS_island_shorelines.extract_shorelines(metadata, settings)
     
     #plot time series of beach area
+    from matplotlib import gridspec
     fig = plt.figure()
-    plt.plot(output['dates'],output['sand_area'],'b-x')
-    plt.grid('on')
+    gs = gridspec.GridSpec(2, 1)
+#    gs.update(bottom=0.03, top=0.97, left=0.03, right=0.97)
+    ax1 = fig.add_subplot(gs[0,0])
+    ax2 = fig.add_subplot(gs[1,0])
+     
+    ax1.plot(output['dates'],output['sand_area'],'b-x')
+    ax1.grid('on')
     plt.xlabel('Date')
     plt.ylabel('Sub-aerial sand area (m^2)')
-    fig.set_size_inches([8,  4])        
+    
+    ax2.plot(output['dates'],output['sand_orientation'],'r-x')
+    ax2.grid('on')
+    plt.xlabel('Date')
+    plt.ylabel('Sub-aerial sand area (m^2)')
+    
+    fig.set_size_inches([10,  6])        
     
     #%% 4. Shoreline analysis
     
@@ -167,8 +179,8 @@ settings = SDS_island_tools.read_island_info(island_file,settings)
     
     #process tide data
     #input tide data is in local time (Australian West Coast, UTC +8 hrs), but code below converts to UTC
-
-    tide_file = 'U:\irds\SEE-PNP-001\CUTTLER_ReefIslandResilience\Data\Tides\ExGulf_Tides_2006_2019.txt'
+    tide_path ='C:\\Users\\00084142\\Dropbox\\Research\\Active_Projects\\CUTTLER_ReefIslandResilience\\Data\\Tides'
+    tide_file = os.path.join(tide_path, 'ExGulf_Tides_2006_2019.txt')
     tide, output_corrected = SDS_island_tools.process_tide_data(tide_file, output)    
 
     cross_distance_corrected = SDS_island_tools.tide_correct(cross_distance,tide,settings)
@@ -178,7 +190,25 @@ settings = SDS_island_tools.read_island_info(island_file,settings)
     output_corrected = SDS_island_tools.tide_correct_sand_polygon(cross_distance_corrected, output_corrected, settings)
     
 
+       #plot time series of beach area
+    from matplotlib import gridspec
+    fig = plt.figure()
+    gs = gridspec.GridSpec(2, 1)
+    gs.update(bottom=0.03, top=0.97, left=0.03, right=0.97)
+    ax1 = fig.add_subplot(gs[0,0])
+    ax2 = fig.add_subplot(gs[1,0])
+     
+    ax1.plot(output_corrected['dates'],output_corrected['sand_area_corrected'],'b-x')
+    ax1.grid('on')
+    plt.xlabel('Date')
+    plt.ylabel('Sub-aerial sand area (m^2)')
     
+    ax2.plot(output_corrected['dates'],output_corrected['sand_orientation'],'r-x')
+    ax2.grid('on')
+    plt.xlabel('Date')
+    plt.ylabel('Sub-aerial sand area (m^2)')
+    
+    fig.set_size_inches([10,  6])
     
     
     

@@ -603,7 +603,7 @@ def tide_correct_sand_polygon(cross_distance_corrected, output_corrected, settin
           
     #go through each row and create numpy array of corrected polygon points
     sand_points_corrected = []
-    for i,j in enumerate(out['xout']):       
+    for i,j in enumerate(out['xout']):  
         sand_points_corrected.append(np.array([out['xout'][i,:], out['yout'][i,:]]).T)
     
     output_corrected['sand_points_corrected']=sand_points_corrected  
@@ -614,23 +614,31 @@ def tide_correct_sand_polygon(cross_distance_corrected, output_corrected, settin
     output_sand_perimeter = []
     output_sand_centroid = []
     output_sand_points_poly = []
+    output_index_correct = []
  
     for i, coords in enumerate(output_corrected['sand_points_corrected']):
+        #get rid of NaN values 
+        coords = coords[~np.isnan(coords[:,0]),:]
         
-        linear_ring = LinearRing(coordinates=coords)
-        sand_polygon = Polygon(shell=linear_ring, holes=None)
+        if len(coords)>=3:
+            linear_ring = LinearRing(coordinates=coords)
+            sand_polygon = Polygon(shell=linear_ring, holes=None)
     
-        output_sand_area.append(sand_polygon.area)
-        output_sand_perimeter.append(sand_polygon.exterior.length)
-        output_sand_centroid.append(np.array(sand_polygon.centroid.coords))
-        output_sand_points_poly.append(np.array(sand_polygon.exterior.coords))
-    
+            output_sand_area.append(sand_polygon.area)
+            output_sand_perimeter.append(sand_polygon.exterior.length)
+            output_sand_centroid.append(np.array(sand_polygon.centroid.coords))
+            output_sand_points_poly.append(np.array(sand_polygon.exterior.coords))
+            output_index_correct.append(i)
+
+    for key in output_corrected:
+        output_corrected[key] = [output_corrected[key][i] for i in output_index_correct]        
+              
     output_corrected['sand_area_corrected'] = output_sand_area
     output_corrected['sand_perimeter_corrected'] = output_sand_perimeter
-    output_corrected['sand_centroid_corrected']= output_sand_centroid
-    output_corrected['sand_points_poly_corrected']= output_sand_points_poly
+    output_corrected['sand_centroid_corrected'] = output_sand_centroid
+    output_corrected['sand_points_poly_corrected'] = output_sand_points_poly
     
-     # save outputput structure as output.pkl
+    # save outputput structure as output.pkl
     sitename = settings['inputs']['sitename']
     filepath_data = settings['inputs']['filepath']
     filepath = os.path.join(filepath_data, sitename)
@@ -639,11 +647,11 @@ def tide_correct_sand_polygon(cross_distance_corrected, output_corrected, settin
     
     
     # save output into a gdb.GeoDataFrame
-    gdf = SDS_tools.output_to_gdf(output_corrected)
-    # set projection
-    gdf.crs = {'init':'epsg:'+str(settings['output_epsg'])}
-    # save as geojson    
-    gdf.to_file(os.path.join(filepath, sitename + '_output_tide_corrected.geojson'), driver='GeoJSON', encoding='utf-8')
+#    gdf = SDS_tools.output_to_gdf(output_corrected)
+#    # set projection
+#    gdf.crs = {'init':'epsg:'+str(settings['output_epsg'])}
+#    # save as geojson    
+#    gdf.to_file(os.path.join(filepath, sitename + '_output_tide_corrected.geojson'), driver='GeoJSON', encoding='utf-8')
         
     #export output data to csv file  
     csv_path = os.path.join(filepath,sitename + '_output_tide_corrected.csv')
