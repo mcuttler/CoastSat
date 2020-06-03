@@ -37,6 +37,10 @@ from coastsat import SDS_tools, SDS_preprocess
     filepath_jpg = os.path.join(filepath_data, sitename, 'jpg_files', 'testing')
     if not os.path.exists(filepath_jpg):      
             os.makedirs(filepath_jpg)
+            
+   filepath = os.path.join(inputs['filepath'], sitename)
+    with open(os.path.join(filepath, sitename + '_output' + '.pkl'), 'rb') as f:
+        output = pickle.load(f) 
     #%%
 #    print('Mapping shorelines:')
 
@@ -79,9 +83,9 @@ from coastsat import SDS_tools, SDS_preprocess
             max_dist_ref_pixels = np.ceil(settings['max_dist_ref']/pixel_size)
             #%%
         # loop through the images
-        for i in range(len(filenames)):
-            print('\r%s:   %d%%' % (satname,int(((i+1)/len(filenames))*100)), end='')
-#            i = 295
+#        for i in range(len(filenames)):
+#            print('\r%s:   %d%%' % (satname,int(((i+1)/len(filenames))*100)), end='')
+            i = 295
             # get image filename
             fn = SDS_tools.get_filenames(filenames[i],filepath, satname)
 #            fn = output['filename'][i]

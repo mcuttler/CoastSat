@@ -775,7 +775,7 @@ def extract_shorelines(metadata, settings):
             if settings['dark_sand']:
                 clf = joblib.load(os.path.join(os.getcwd(), 'classifiers', 'NN_4classes_Landsat_dark.pkl'))
             else:
-                clf = joblib.load(os.path.join(os.getcwd(), 'classifiers', 'NN_4classes_Landsat.pkl'))
+                clf = joblib.load(os.path.join(os.getcwd(), 'classifiers', 'NN_4classes_Landsat_Nick.pkl'))
             pixel_size = 15
         elif satname == 'S2':
             clf = joblib.load(os.path.join(os.getcwd(), 'classifiers', 'NN_4classes_S2.pkl'))
@@ -822,7 +822,7 @@ def extract_shorelines(metadata, settings):
             if satname == 'S2':
                 thresh = 0.5
             else:
-                thresh = 0.95
+                thresh = 0.75
             
             sand_contours = measure.find_contours(im_binary_sand_closed, thresh)
             
@@ -833,7 +833,7 @@ def extract_shorelines(metadata, settings):
                 if satname == 'S2':
                     thresh = 0.5
                 else: 
-                    thresh = 0.95
+                    thresh = 0.75
                     
                 sand_contours = measure.find_contours(im_binary_sand_closed, thresh)
                 # if there are still more than one contour, only keep the one with more points

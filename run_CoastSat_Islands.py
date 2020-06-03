@@ -18,16 +18,16 @@
 
     
     # region of interest (longitude, latitude in WGS84), can be loaded from a .kml polygon
-    polygon = SDS_tools.polygon_from_kml(os.path.join(os.getcwd(), 'KMLs','THEVENARD.kml'))
+    polygon = SDS_tools.polygon_from_kml(os.path.join(os.getcwd(), 'KMLs','ROSEMARY_ISLAND.kml'))
                 
     # date range
-    dates = ['2019-01-15', '2019-10-01']
+    dates = ['2017-01-01', '2020-01-01']
     
     # satellite missions
-    sat_list = ['L8','S2']
+    sat_list = ['S2']
     
     # name of the site
-    sitename = 'THEVENARD'
+    sitename = 'ROSEMARY_ISLAND'
     
     # filepath where data will be stored
     filepath_data = os.path.join(os.getcwd(), 'data')
@@ -60,7 +60,7 @@ metadata = SDS_download.get_metadata(inputs)
 # settings for the shoreline extraction
 settings = { 
         # general parameters:
-        'cloud_thresh': 0.25,        # threshold on maximum cloud cover
+        'cloud_thresh': 0.5,        # threshold on maximum cloud cover
         'output_epsg': 28350,       # epsg code of spatial reference system desired for the output - 28350 = GDA94 zone 50
         # quality control:
         'check_detection': False,    # if True, shows each shoreline detection to the user for validation
@@ -117,9 +117,9 @@ settings = {
     #%% 4. Shoreline analysis
     
     # if you have already mapped the shorelines, load the output.pkl file
-    filepath = os.path.join(inputs['filepath'], sitename)
-    with open(os.path.join(filepath, sitename + '_output' + '.pkl'), 'rb') as f:
-        output = pickle.load(f) 
+#    filepath = os.path.join(inputs['filepath'], sitename)
+#    with open(os.path.join(filepath, sitename + '_output' + '.pkl'), 'rb') as f:
+#        output = pickle.load(f) 
     
     # now we have to define cross-shore transects over which to quantify the shoreline changes
     # each transect is defined by two points, its origin and a second point that defines its orientation
@@ -160,7 +160,7 @@ settings = {
     transects = SDS_island_transects.calc_island_transects(settings)
     
     # intersect the transects with the 2D shorelines to obtain time-series of cross-shore distance
-    settings['along_dist'] = 10
+    settings['along_dist'] = 25
     
     #add some print out to show percentage of shorelines processed 
     cross_distance = SDS_island_transects.compute_intersection(output, transects, settings)            
@@ -194,7 +194,7 @@ settings = {
     from matplotlib import gridspec
     fig = plt.figure()
     gs = gridspec.GridSpec(2, 1)
-    gs.update(bottom=0.03, top=0.97, left=0.03, right=0.97)
+#    gs.update(bottom=0.03, top=0.97, left=0.03, right=0.97)
     ax1 = fig.add_subplot(gs[0,0])
     ax2 = fig.add_subplot(gs[1,0])
      
@@ -208,7 +208,7 @@ settings = {
     plt.xlabel('Date')
     plt.ylabel('Sub-aerial sand area (m^2)')
     
-    fig.set_size_inches([10,  6])
+    fig.set_size_inches([11,  6])
     
     
     

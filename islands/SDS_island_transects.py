@@ -231,7 +231,7 @@ def calc_island_transects(settings):
     return transects 
 
 
-def compute_intersection(output, transects, settings):
+def compute_intersection(output, transects, settings,savename):
     """
     Computes the intersection between the 2D mapped shorelines and the transects, to generate
     time-series of cross-shore distance along each transect.
@@ -344,7 +344,7 @@ def compute_intersection(output, transects, settings):
     
     #save cross_distance dictionary to CSV
     filepath = os.path.join(os.getcwd(), 'data', settings['inputs']['sitename'])
-    csv_path = os.path.join(filepath, settings['inputs']['sitename'] + '_cross_distance.csv')
+    csv_path = os.path.join(filepath, settings['inputs']['sitename'] + '_'+savename+'.csv')        
     data_out = pd.DataFrame.from_dict(cross_dist)    
     data_out.to_csv(csv_path)    
 

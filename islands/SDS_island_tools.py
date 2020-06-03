@@ -412,7 +412,7 @@ def merge_output(output):
 
     return output_all
 
-def tide_correct(cross_distance, tide, settings):
+def tide_correct(cross_distance, tide, settings, savefile):
     """
     Function for tide-correcting shoreline position time series returned by SDS_transects.compute_intersection
     
@@ -461,14 +461,15 @@ def tide_correct(cross_distance, tide, settings):
             transect_corrected = np.array(transect_corrected)
             cross_distance_corrected[key] = transect_corrected
         #save cross_distance dictionary to CSV
-        filepath = os.path.join(os.getcwd(), 'data', settings['inputs']['sitename'])
-        csv_path = os.path.join(filepath, settings['inputs']['sitename'] + '_cross_distance_tide_corrected.csv')
-        data_out = pd.DataFrame.from_dict(cross_distance_corrected)    
-        data_out.to_csv(csv_path)
+        if savefile == 1:
+            filepath = os.path.join(os.getcwd(), 'data', settings['inputs']['sitename'])
+            csv_path = os.path.join(filepath, settings['inputs']['sitename'] + '_cross_distance_tide_corrected.csv')
+            data_out = pd.DataFrame.from_dict(cross_distance_corrected)    
+            data_out.to_csv(csv_path)
+            
+            with open(os.path.join(filepath, settings['inputs']['sitename'] + '_cross_distance_tide_corrected.pkl'), 'wb') as f:
+                pickle.dump(cross_distance_corrected, f) 
         
-        with open(os.path.join(filepath, settings['inputs']['sitename'] + '_cross_distance_tide_corrected.pkl'), 'wb') as f:
-            pickle.dump(cross_distance_corrected, f) 
-    
     else:
         print('ERROR - time series not same lenght!')
 

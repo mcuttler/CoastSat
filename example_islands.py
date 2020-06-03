@@ -88,7 +88,7 @@ metadata = SDS_download.get_metadata(inputs)
     ### set the max distance (in meters) allowed from the reference shoreline for a detected shoreline to be valid
     settings['max_dist_ref'] = 100        
     ##
-    ### extract shorelines from all images (also saves output.pkl and shorelines.kml)
+    #%% extract shorelines from all images (also saves output.pkl and shorelines.kml)
     output = SDS_island_shorelines.extract_shorelines(metadata, settings)
     
     #plot time series of beach area
