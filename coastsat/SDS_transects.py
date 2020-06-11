@@ -156,6 +156,39 @@ def draw_transects(output, settings):
         
     return transects
 
+def transects_from_text(trans_txtfile): 
+    """ 
+    Reads transecs start and end coordinates from text file (csv). 
+    
+    Arguments:
+    -----------
+        trans_txtfile: string
+            full filepath of text file to read
+            
+    Outputs:
+    ----------
+        transects: dictionary
+            nubered transects for each start/end pair 
+    
+    M Cuttler (UWA, December 2019)
+    """
+        
+    
+    #read in data
+    trans_info = pd.read_csv(trans_txtfile)
+    trans_info = trans_info.values
+    #create output dictionary
+    transects = dict([])
+    
+    #fill so is of format: 
+#        example['Transect 1'] = np.array([[342836, 6269215], [343315, 6269071]])
+    for i, data in enumerate(trans_info):
+        key = 'Transect ' + str(i+1)
+        val = np.array([[data[1],data[2]], [data[3],data[4]]])
+        transects[key] = val
+        
+    return transects
+
 def compute_intersection(output, transects, settings):
     """
     Computes the intersection between the 2D shorelines and the shore-normal.
