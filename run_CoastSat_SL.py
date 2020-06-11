@@ -1,0 +1,181 @@
+#==========================================================#
+# Shoreline extraction from satellite images
+#==========================================================#
+
+# Kilian Vos WRL 2018
+
+#%% 1. Initial settings
+
+# load modules
+import os
+import numpy as np
+import pickle
+import warnings
+warnings.filterwarnings("ignore")
+import matplotlib.pyplot as plt
+from coastsat import SDS_download, SDS_preprocess, SDS_shoreline, SDS_tools, SDS_transects
+
+## region of interest (longitude, latitude in WGS84)
+#polygon = [[[151.301454, -33.700754],
+#            [151.311453, -33.702075],
+#            [151.307237, -33.739761],
+#            [151.294220, -33.736329],
+#            [151.301454, -33.700754]]]
+# can also be loaded from a .kml polygon
+#kml_polygon = os.path.join(os.getcwd(), 'examples', 'NARRA_polygon.kml')
+polygon = SDS_tools.polygon_from_kml(os.path.join(os.getcwd(), 'KMLs','ROSEMARY_ISLAND.kml'))
+       
+# date range
+dates = ['2020-01-01', '2020-01-15']
+
+# satellite missions
+sat_list = ['S2']
+
+# name of the site
+sitename = 'OCEAN_BEACH'
+
+# filepath where data will be stored
+filepath_data = os.path.join(os.getcwd(), 'data')
+
+# put all the inputs into a dictionnary
+inputs = {
+    'polygon': polygon,
+    'dates': dates,
+    'sat_list': sat_list,
+    'sitename': sitename,
+    'filepath': filepath_data
+        }
+
+#%% 2. Retrieve images and save
+
+# retrieve satellite images from GEE
+# metadata = SDS_download.retrieve_images(inputs)
+
+# if you have already downloaded the images, just load the metadata file
+metadata = SDS_download.get_metadata(inputs) 
+
+
+# settings for the shoreline extraction
+settings = { 
+    # general parameters:
+    'cloud_thresh': 0.5,        # threshold on maximum cloud cover
+    'output_epsg': 28350,  # epsg code of spatial reference system desired for the output; GDA94 zone 50  
+    # quality control:
+    'check_detection': True,    # if True, shows each shoreline detection to the user for validation
+    'save_figure': True,        # if True, saves a figure showing the mapped shoreline for each image
+    # add the inputs defined previously
+    'inputs': inputs,
+    # [ONLY FOR ADVANCED USERS] shoreline detection parameters:
+    'min_beach_area': 500,     # minimum area (in metres^2) for an object to be labelled as a beach
+    'buffer_size': 150,         # radius (in metres) of the buffer around sandy pixels considered in the shoreline detection
+    'min_length_sl': 500,       # minimum length (in metres) of shoreline perimeter to be valid
+    'cloud_mask_issue': True,  # switch this parameter to True if sand pixels are masked (in black) on many images  
+    'dark_sand': False,          # only switch to True if your site has dark sand (e.g. black sand beach)
+}
+
+# [OPTIONAL] preprocess images (cloud masking, pansharpening/down-sampling)
+#SDS_preprocess.save_jpg(metadata, settings)
+#
+#%% 3. Batch shoreline detection
+    
+# [OPTIONAL] create a reference shoreline (helps to identify outliers and false detections)
+settings['reference_shoreline'] = SDS_preprocess.get_reference_sl(metadata, settings)
+## set the max distance (in meters) allowed from the reference shoreline for a detected shoreline to be valid
+settings['max_dist_ref'] = 200        
+#
+## extract shorelines from all images (also saves output.pkl and shorelines.kml)
+#output = SDS_shoreline.extract_shorelines(metadata, settings)	
+#
+# plot the mapped shorelines
+#fig = plt.figure()
+#plt.axis('equal')
+#plt.xlabel('Eastings')
+#plt.ylabel('Northings')
+#plt.grid(linestyle=':', color='0.5')
+#for i in range(len(output['shorelines'])):
+#    sl = output['shorelines'][i]
+#    date = output['dates'][i]
+#    plt.plot(sl[:,0], sl[:,1], '.', label=date.strftime('%d-%m-%Y'))
+#plt.legend()
+#mng = plt.get_current_fig_manager()                                         
+#mng.window.showMaximized()    
+#fig.set_size_inches([15.76,  8.52])
+#
+#for i in range(len(transects)):
+#    plt.plot(transects['Transect '+str(i+1)][0,0],transects['Transect '+str(i+1)][0,1],'b.')
+#    plt.plot(transects['Transect '+str(i+1)][1,0],transects['Transect '+str(i+1)][1,1],'r.')
+#%% 4. Shoreline analysis
+
+# if you have already mapped the shorelines, load the output.pkl file
+filepath = os.path.join(inputs['filepath'], sitename)
+with open(os.path.join(filepath, sitename + '_metadata' + '.pkl'), 'rb') as f:
+    metadata = pickle.load(f)
+with open(os.path.join(filepath, sitename + '_output' + '.pkl'), 'rb') as f:
+    output = pickle.load(f) 
+
+# now we have to define cross-shore transects over which to quantify the shoreline changes
+# each transect is defined by two points, its origin and a second point that defines its orientation
+
+# there are 3 options to create the transects:
+# - option 1: draw the shore-normal transects along the beach
+# - option 2: load the transect coordinates from a .geojson file
+# - option 3: create the transects manually by providing the coordinates
+
+# option 1: draw origin of transect first and then a second point to define the orientation
+transects = SDS_transects.draw_transects(output, settings)
+    
+# option 2: load the transects from a .geojson file
+#geojson_file = os.path.join(os.getcwd(), 'examples', 'NARRA_transects.geojson')
+#transects = SDS_tools.transects_from_geojson(geojson_file)
+
+# option 3: create the transects by manually providing the coordinates of two points 
+#transects = dict([])
+#transects['Transect 1'] = np.array([[382056.45, 6459212.94], [381947.55, 6459307.8]])
+#transects['Transect 2'] = np.array([[382143.34, 6459903.1], [381942.46, 6459944.13]])
+#transects['Transect 3'] = np.array([[382255.03, 6460993.12], [382030.6, 6461042.08]])
+#transects['Transect 4'] = np.array([[382342.38, 6461515.21], [382180.26, 6461536.07]])   
+
+#option 4: load transect start/end coordinates from text file
+#trans_txtfile = os.path.join(os.getcwd(), 'data',sitename, sitename + '_transect_info.csv')
+#transects = SDS_transects.transects_from_text(trans_txtfile)
+#
+## intersect the transects with the 2D shorelines to obtain time-series of cross-shore distance
+settings['along_dist'] = 25
+cross_distance = SDS_transects.compute_intersection(output, transects, settings) 
+#%%
+## plot the time-series
+#from matplotlib import gridspec
+#fig = plt.figure()
+#gs = gridspec.GridSpec(len(cross_distance),1)
+##gs.update(left=0.05, right=0.95, bottom=0.05, top=0.95, hspace=0.05)
+#for i,key in enumerate(cross_distance.keys()):
+#    if np.all(np.isnan(cross_distance[key])):
+#        continue
+#    ax = fig.add_subplot(gs[i,0])
+#    ax.grid(linestyle=':', color='0.5')
+#    ax.set_ylim([-45,45])
+#    ax.plot(output['dates'], cross_distance[key]- np.nanmean(cross_distance[key]), '-^', markersize=6)
+#    ax.set_ylabel('distance [m]', fontsize=12)
+#    ax.text(0.5,0.95,'Transect ▲' + key, bbox=dict(boxstyle="square", ec='k',fc='w'), ha='center',
+#            va='top', transform=ax.transAxes, fontsize=14)
+#mng = plt.get_current_fig_manager()                                         
+#mng.window.showMaximized()    
+#fig.set_size_inches([15.76,  8.52])
+    
+#%% Export output and cross_distance to CSV
+import pandas as pd
+#full filepath and name for CSV
+csv_path1 = os.path.join(filepath,sitename + '_output_raw.csv')
+csv_path2 = os.path.join(filepath,sitename + '_cross_distance_raw.csv')
+#convert dictionary to pandas dataframe for export to CSV
+data_out1 = pd.DataFrame.from_dict(output)
+data_out2 = pd.DataFrame.from_dict(cross_distance)
+#export dataframe to CSV
+data_out1.to_csv(csv_path1)
+data_out2.to_csv(csv_path2)
+
+#export individual shorelines to text file as there is a problem with pandas
+for i,shore in enumerate(output['shorelines']):
+    savename = os.path.join(os.getcwd(), 'data',sitename, 'shorelines', 'shoreline'+output['dates'][i].strftime("%Y%m%d")+'.txt')
+#    print(savename)
+    np.savetxt(savename,shore,delimiter= '\t',fmt='%13.6f')
