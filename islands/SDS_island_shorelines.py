@@ -773,12 +773,12 @@ def extract_shorelines(metadata, settings):
         # from metres to pixels
         if satname in ['L5','L7','L8']:
             if settings['dark_sand']:
-                clf = joblib.load(os.path.join(os.getcwd(), 'classifiers', 'NN_4classes_Landsat_dark.pkl'))
+                clf = joblib.load(os.path.join(os.getcwd(), 'classification','models', 'NN_4classes_Landsat_dark.pkl'))
             else:
-                clf = joblib.load(os.path.join(os.getcwd(), 'classifiers', 'NN_4classes_Landsat_Nick.pkl'))
+                clf = joblib.load(os.path.join(os.getcwd(), 'classification','models', 'NN_4classes_Landsat_Nick.pkl'))
             pixel_size = 15
         elif satname == 'S2':
-            clf = joblib.load(os.path.join(os.getcwd(), 'classifiers', 'NN_4classes_S2.pkl'))
+            clf = joblib.load(os.path.join(os.getcwd(), 'classification','models', 'NN_4classes_S2.pkl'))
             pixel_size = 10
         buffer_size_pixels = np.ceil(settings['buffer_size']/pixel_size)
         min_beach_area_pixels = np.ceil(settings['min_beach_area']/pixel_size**2)
