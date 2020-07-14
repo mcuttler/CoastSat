@@ -23,16 +23,16 @@ from coastsat import SDS_download, SDS_preprocess, SDS_shoreline, SDS_tools, SDS
 #            [151.301454, -33.700754]]]
 # can also be loaded from a .kml polygon
 #kml_polygon = os.path.join(os.getcwd(), 'examples', 'NARRA_polygon.kml')
-polygon = SDS_tools.polygon_from_kml(os.path.join(os.getcwd(), 'KMLs','ROSEMARY_ISLAND.kml'))
+polygon = SDS_tools.polygon_from_kml(os.path.join(os.getcwd(), 'KMLs','SALMON_HOLES.kml'))
        
 # date range
-dates = ['2020-01-01', '2020-01-15']
+dates = ['2015-01-01', '2020-07-01']
 
 # satellite missions
 sat_list = ['S2']
 
 # name of the site
-sitename = 'OCEAN_BEACH'
+sitename = 'SALMON_HOLES'
 
 # filepath where data will be stored
 filepath_data = os.path.join(os.getcwd(), 'data')
@@ -74,17 +74,17 @@ settings = {
 }
 
 # [OPTIONAL] preprocess images (cloud masking, pansharpening/down-sampling)
-#SDS_preprocess.save_jpg(metadata, settings)
+# SDS_preprocess.save_jpg(metadata, settings)
 #
 #%% 3. Batch shoreline detection
     
 # [OPTIONAL] create a reference shoreline (helps to identify outliers and false detections)
 settings['reference_shoreline'] = SDS_preprocess.get_reference_sl(metadata, settings)
 ## set the max distance (in meters) allowed from the reference shoreline for a detected shoreline to be valid
-settings['max_dist_ref'] = 200        
+settings['max_dist_ref'] = 100        
 #
 ## extract shorelines from all images (also saves output.pkl and shorelines.kml)
-#output = SDS_shoreline.extract_shorelines(metadata, settings)	
+output = SDS_shoreline.extract_shorelines(metadata, settings)	
 #
 # plot the mapped shorelines
 #fig = plt.figure()
