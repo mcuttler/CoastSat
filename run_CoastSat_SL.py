@@ -23,16 +23,16 @@ from coastsat import SDS_download, SDS_preprocess, SDS_shoreline, SDS_tools, SDS
 #            [151.301454, -33.700754]]]
 # can also be loaded from a .kml polygon
 #kml_polygon = os.path.join(os.getcwd(), 'examples', 'NARRA_polygon.kml')
-polygon = SDS_tools.polygon_from_kml(os.path.join(os.getcwd(), 'KMLs','SALMON_HOLES.kml'))
+polygon = SDS_tools.polygon_from_kml(os.path.join(os.getcwd(), 'KMLs','BEAU_VILLON.kml'))
        
 # date range
-dates = ['2015-01-01', '2020-07-01']
+dates = ['2019-01-01', '2019-04-01']
 
 # satellite missions
 sat_list = ['S2']
 
 # name of the site
-sitename = 'SALMON_HOLES'
+sitename = 'BEAU_VILLON'
 
 # filepath where data will be stored
 filepath_data = os.path.join(os.getcwd(), 'data')
@@ -49,17 +49,17 @@ inputs = {
 #%% 2. Retrieve images and save
 
 # retrieve satellite images from GEE
-# metadata = SDS_download.retrieve_images(inputs)
+metadata = SDS_download.retrieve_images(inputs)
 
 # if you have already downloaded the images, just load the metadata file
-metadata = SDS_download.get_metadata(inputs) 
+# metadata = SDS_download.get_metadata(inputs) 
 
 
 # settings for the shoreline extraction
 settings = { 
     # general parameters:
-    'cloud_thresh': 0.5,        # threshold on maximum cloud cover
-    'output_epsg': 28350,  # epsg code of spatial reference system desired for the output; GDA94 zone 50  
+    'cloud_thresh': 0.9,        # threshold on maximum cloud cover
+    'output_epsg': 32740,  # epsg code of spatial reference system desired for the output; GDA94 zone 50  
     # quality control:
     'check_detection': True,    # if True, shows each shoreline detection to the user for validation
     'save_figure': True,        # if True, saves a figure showing the mapped shoreline for each image
@@ -68,20 +68,20 @@ settings = {
     # [ONLY FOR ADVANCED USERS] shoreline detection parameters:
     'min_beach_area': 500,     # minimum area (in metres^2) for an object to be labelled as a beach
     'buffer_size': 150,         # radius (in metres) of the buffer around sandy pixels considered in the shoreline detection
-    'min_length_sl': 500,       # minimum length (in metres) of shoreline perimeter to be valid
+    'min_length_sl': 1000,       # minimum length (in metres) of shoreline perimeter to be valid
     'cloud_mask_issue': True,  # switch this parameter to True if sand pixels are masked (in black) on many images  
     'dark_sand': False,          # only switch to True if your site has dark sand (e.g. black sand beach)
 }
 
 # [OPTIONAL] preprocess images (cloud masking, pansharpening/down-sampling)
-# SDS_preprocess.save_jpg(metadata, settings)
+SDS_preprocess.save_jpg(metadata, settings)
 #
 #%% 3. Batch shoreline detection
     
 # [OPTIONAL] create a reference shoreline (helps to identify outliers and false detections)
 settings['reference_shoreline'] = SDS_preprocess.get_reference_sl(metadata, settings)
 ## set the max distance (in meters) allowed from the reference shoreline for a detected shoreline to be valid
-settings['max_dist_ref'] = 100        
+settings['max_dist_ref'] = 25        
 #
 ## extract shorelines from all images (also saves output.pkl and shorelines.kml)
 output = SDS_shoreline.extract_shorelines(metadata, settings)	
