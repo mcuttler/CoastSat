@@ -8,7 +8,12 @@
 *.jpg
 *.pkl
 *.kml
-*.txt
-*.geojson
 *checkpoint.ipynb
+*.txt
 *.csv
+*.db
+*.avi
+*.dat
+*.csv
+*.xml
+
