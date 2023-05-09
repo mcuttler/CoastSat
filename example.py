@@ -23,30 +23,30 @@ import pytz
 from coastsat import SDS_download, SDS_preprocess, SDS_shoreline, SDS_tools, SDS_transects
 
 # region of interest (longitude, latitude in WGS84)
-polygon = [[[151.301454, -33.700754],
-            [151.311453, -33.702075],
-            [151.307237, -33.739761],
-            [151.294220, -33.736329],
-            [151.301454, -33.700754]]]
+# polygon = [[[151.301454, -33.700754],
+#             [151.311453, -33.702075],
+#             [151.307237, -33.739761],
+#             [151.294220, -33.736329],
+#             [151.301454, -33.700754]]]
 # can also be loaded from a .kml polygon
 # kml_polygon = os.path.join(os.getcwd(), 'examples', 'NARRA_polygon.kml')
 # polygon = SDS_tools.polygon_from_kml(kml_polygon)
 # convert polygon to a smallest rectangle (sides parallel to coordinate axes)
-polygon = SDS_tools.smallest_rectangle(polygon)
+# polygon = SDS_tools.smallest_rectangle(polygon)
 
-# date range
-dates = ['1984-01-01', '2022-01-01']
+# # date range
+# dates = ['1984-01-01', '2022-01-01']
 
-# satellite missions
-sat_list = ['L5','L7','L8']
-collection = 'C02' # choose Landsat collection 'C01' or 'C02'
-# name of the site
-sitename = 'NARRA'
+# # satellite missions
+# sat_list = ['L5','L7','L8']
+# collection = 'C02' # choose Landsat collection 'C01' or 'C02'
+# # name of the site
+# sitename = 'NARRA'
 
-# filepath where data will be stored
-filepath_data = os.path.join(os.getcwd(), 'data')
+# # filepath where data will be stored
+# filepath_data = os.path.join(os.getcwd(), 'data')
 
-# put all the inputs into a dictionnary
+# # put all the inputs into a dictionnary
 inputs = {
     'polygon': polygon,
     'dates': dates,
@@ -56,8 +56,8 @@ inputs = {
     'landsat_collection': collection
         }
 
-# before downloading the images, check how many images are available for your inputs
-SDS_download.check_images_available(inputs);
+# # before downloading the images, check how many images are available for your inputs
+# SDS_download.check_images_available(inputs);
 
 #%% 2. Retrieve images
 
