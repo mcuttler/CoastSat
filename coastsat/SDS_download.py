@@ -123,7 +123,7 @@ def retrieve_images(inputs):
         # create subfolder structure to store the different bands
         filepaths = SDS_tools.create_folder_structure(im_folder, satname)
         # initialise variables and loop through images
-        georef_accs = []; filenames = []; all_names = []; im_epsg = []
+        georef_accs = []; filenames = []; all_names = []; im_epsg = []; im_quality = [];
         bands_id = bands_dict[satname]
         
         # loop through each image
@@ -146,6 +146,11 @@ def retrieve_images(inputs):
                     acc_georef = im_meta['properties']['GEOMETRIC_RMSE_MODEL']
                 else:
                     acc_georef = 12 # default value of accuracy (RMSE = 12m)
+                # add additional metadata for Sharon's Sniffer [image_quality 1-9 for Landsat]
+                if satname in ['L5','L7']:
+                    im_quality.append(im_meta['properties']['IMAGE_QUALITY'])
+                elif satname in ['L8','L9']:
+                    im_quality.append(im_meta['properties']['IMAGE_QUALITY_OLI'])
             elif satname in ['S2']:
                 # Sentinel-2 products don't provide a georeferencing accuracy (RMSE as in Landsat)
                 # but they have a flag indicating if the geometric quality control was passed or failed
@@ -155,8 +160,15 @@ def retrieve_images(inputs):
                 flag_names = ['GEOMETRIC_QUALITY_FLAG', 'GEOMETRIC_QUALITY', 'quality_check', 'GENERAL_QUALITY_FLAG']
                 for key in flag_names: 
                     if key in im_meta['properties'].keys(): break
-                if im_meta['properties'][key] == 'PASSED': acc_georef = 1
-                else: acc_georef = -1
+                if im_meta['properties'][key] == 'PASSED': 
+                    acc_georef = 1
+                else: 
+                    acc_georef = -1
+                # add additional metadata for Sharon's Sniffer ['PASSED' or 'FAILED']
+                flag_names = ['RADIOMETRIC_QUALITY', 'RADIOMETRIC_QUALITY_FLAG']
+                for key in flag_names: 
+                    if key in im_meta['properties'].keys(): break
+                im_quality.append(im_meta['properties'][key])
             georef_accs.append(acc_georef)
 
             # download the images as .tif files
@@ -197,10 +209,14 @@ def retrieve_images(inputs):
                 # create filename for image
                 for key in bands.keys():
                     im_fn[key] = im_date + '_' + satname + '_' + inputs['sitename'] + '_' + key + suffix
-                # if two images taken at the same date add 'dup' to the name (duplicate)
-                if any(im_fn['ms'] in _ for _ in all_names):
+                # if multiple images taken at the same date add 'dupX' to the name (duplicate number X)
+                duplicate_counter = 0
+                while im_fn['ms'] in all_names:
+                    duplicate_counter += 1
                     for key in bands.keys():
-                        im_fn[key] = im_date + '_' + satname + '_' + inputs['sitename'] + '_' + key + '_dup' + suffix
+                        im_fn[key] = im_date + '_' + satname + '_' \
+                            + inputs['sitename'] + '_' + key \
+                            + '_dup%d'%duplicate_counter + suffix
                 im_fn['mask'] = im_fn['ms'].replace('_ms','_mask')
                 all_names.append(im_fn['ms'])
                 filenames.append(im_fn['ms'])
@@ -223,7 +239,7 @@ def retrieve_images(inputs):
                 # add metadata in .txt file (save at the end of the loop)
                 filename_txt = im_fn['ms'].replace('_ms','').replace('.tif','')
                 metadict = {'filename':im_fn['ms'],'acc_georef':georef_accs[i],
-                            'epsg':im_epsg[i]}
+                            'epsg':im_epsg[i],'image_quality':im_quality[i]}
 
             #=============================================================================================#
             # Landsat 7, 8 and 9 download
@@ -264,10 +280,14 @@ def retrieve_images(inputs):
                 # create filename for both images (ms and pan)
                 for key in bands.keys():
                     im_fn[key] = im_date + '_' + satname + '_' + inputs['sitename'] + '_' + key + suffix
-                # if two images taken at the same date add 'dup' to the name (duplicate)
-                if any(im_fn['ms'] in _ for _ in all_names):
+                # if multiple images taken at the same date add 'dupX' to the name (duplicate number X)
+                duplicate_counter = 0
+                while im_fn['ms'] in all_names:
+                    duplicate_counter += 1
                     for key in bands.keys():
-                        im_fn[key] = im_date + '_' + satname + '_' + inputs['sitename'] + '_' + key + '_dup' + suffix
+                        im_fn[key] = im_date + '_' + satname + '_' \
+                            + inputs['sitename'] + '_' + key \
+                            + '_dup%d'%duplicate_counter + suffix
                 im_fn['mask'] = im_fn['ms'].replace('_ms','_mask')
                 all_names.append(im_fn['ms'])
                 filenames.append(im_fn['ms'])  
@@ -296,7 +316,7 @@ def retrieve_images(inputs):
                 # metadata for .txt file
                 filename_txt = im_fn['ms'].replace('_ms','').replace('.tif','')
                 metadict = {'filename':im_fn['ms'],'acc_georef':georef_accs[i],
-                            'epsg':im_epsg[i]}
+                            'epsg':im_epsg[i],'image_quality':im_quality[i]}
 
             #=============================================================================================#
             # Sentinel-2 download
@@ -334,19 +354,16 @@ def retrieve_images(inputs):
                 
                 # create filename for the three images (ms, swir and mask)
                 for key in bands.keys():
-                    im_fn[key] = im_date + '_' + satname + '_' + inputs['sitename'] + '_' + key + suffix
-                # if two images taken at the same date add 'dup' to the name (duplicate)
-                if any(im_fn['ms'] in _ for _ in all_names):
+                    im_fn[key] = im_date + '_' + satname + '_' \
+                        + inputs['sitename'] + '_' + key + suffix
+                # if multiple images taken at the same date add 'dupX' to the name (duplicate)
+                duplicate_counter = 0
+                while im_fn['ms'] in all_names:
+                    duplicate_counter += 1
                     for key in bands.keys():
-                        im_fn[key] = im_date + '_' + satname + '_' + inputs['sitename'] + '_' + key + '_dup2' + suffix
-                    # also check for triplicates (only on S2 imagery) and add '3' to the name
-                    if im_fn['ms'] in all_names:
-                        for key in bands.keys():
-                            im_fn[key] = im_date + '_' + satname + '_' + inputs['sitename'] + '_' + key + '_dup3' + suffix
-                        # also check for quadruplicates (only on S2 imagery) add 'qua' to the name
-                        if im_fn['ms'] in all_names:
-                            for key in bands.keys():
-                                im_fn[key] = im_date + '_' + satname + '_' + inputs['sitename'] + '_' + key + '_dup4' + suffix
+                        im_fn[key] = im_date + '_' + satname + '_' \
+                            + inputs['sitename'] + '_' + key \
+                            + '_dup%d'%duplicate_counter + suffix
                 all_names.append(im_fn['ms'])
                 filenames.append(im_fn['ms']) 
                 
@@ -370,7 +387,7 @@ def retrieve_images(inputs):
                 # metadata for .txt file
                 filename_txt = im_fn['ms'].replace('_ms','').replace('.tif','')
                 metadict = {'filename':im_fn['ms'],'acc_georef':georef_accs[i],
-                            'epsg':im_epsg[i]}
+                            'epsg':im_epsg[i],'image_quality':im_quality[i]}
 
             # write metadata
             with open(os.path.join(filepaths[0],filename_txt + '.txt'), 'w') as f:
@@ -510,7 +527,10 @@ def check_images_available(inputs):
     im_dict_T1 = dict([])
     sum_img = 0
     for satname in inputs['sat_list']:
-        im_list = get_image_info(col_names_T1[satname],satname,polygon,dates_str)
+        if 'S2tile' not in inputs.keys():
+            im_list = get_image_info(col_names_T1[satname],satname,polygon,dates_str)
+        else :
+            im_list = get_image_info(col_names_T1[satname],satname,polygon,dates_str,S2tile = inputs['S2tile'])
         sum_img = sum_img + len(im_list)
         print('     %s: %d images'%(satname,len(im_list)))
         im_dict_T1[satname] = im_list
@@ -565,7 +585,7 @@ def check_images_available(inputs):
 
     return im_dict_T1, im_dict_T2
 
-def get_image_info(collection,satname,polygon,dates):
+def get_image_info(collection,satname,polygon,dates,**kwargs):
     """
     Reads info about EE images for the specified collection, satellite and dates
 
@@ -591,9 +611,14 @@ def get_image_info(collection,satname,polygon,dates):
         try:
             # get info about images
             ee_col = ee.ImageCollection(collection)
-            col = ee_col.filterBounds(ee.Geometry.Polygon(polygon))\
-                        .filterDate(dates[0],dates[1])
+            if 'S2tile' in kwargs: # if user defined a S2 tile, keep images only for that tile
+                col = ee_col.filterBounds(ee.Geometry.Polygon(polygon)).filterDate(dates[0],dates[1]).filterMetadata('MGRS_TILE','equals',kwargs['S2tile']) #58GGP
+                print('Only keeping user-defined S2tile : %s' % kwargs['S2tile'])
+            else: # original code          
+                col = ee_col.filterBounds(ee.Geometry.Polygon(polygon))\
+                            .filterDate(dates[0],dates[1])
             im_list = col.getInfo().get('features')
+
             break
         except:
             continue
