@@ -459,15 +459,21 @@ def get_filenames(filename, filepath, satname):
     fn: str or list of str
         contains the filepath + filenames to access the satellite image
         
-    """     
-    
+    """ 
+    ms_suffix_Landsat = 'ms.tif'    
+    mask_suffix_Landsat = 'mask.tif'
+    pan_suffix_Landsat = 'pan.tif'
+    if 'dup' in filename:
+        ms_suffix_Landsat = 'ms_%s'%(filename.split('_')[-1])
+        mask_suffix_Landsat = 'mask_%s'%(filename.split('_')[-1])
+        pan_suffix_Landsat = 'pan_%s'%(filename.split('_')[-1])
     if satname == 'L5':
-        fn_mask = filename.replace('ms.tif','mask.tif')
+        fn_mask = filename.replace(ms_suffix_Landsat,mask_suffix_Landsat)
         fn = [os.path.join(filepath[0], filename),
               os.path.join(filepath[1], fn_mask)]
     if satname in ['L7','L8','L9']:
-        fn_pan = filename.replace('ms.tif','pan.tif')
-        fn_mask = filename.replace('ms.tif','mask.tif')
+        fn_pan = filename.replace(ms_suffix_Landsat,pan_suffix_Landsat)
+        fn_mask = filename.replace(ms_suffix_Landsat,mask_suffix_Landsat)
         fn = [os.path.join(filepath[0], filename),
               os.path.join(filepath[1], fn_pan),
               os.path.join(filepath[2], fn_mask)]
