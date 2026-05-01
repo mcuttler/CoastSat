@@ -21,34 +21,35 @@ from scipy import stats
 from datetime import datetime, timedelta
 import pytz
 from coastsat import SDS_download, SDS_preprocess, SDS_shoreline, SDS_tools, SDS_transects
-%matplotlib qt
-#%% 
-# region of interest (longitude, latitude in WGS84)
-polygon = [[[115.751187, -31.900668],
-            [115.751181, -31.929797],
-            [115.757164, -31.929952],
-            [115.756803, -31.900845],
-            [115.751187, -31.900668]]]
 
+# region of interest (longitude, latitude in WGS84)
+polygon = [[[151.301454, -33.700754],
+            [151.311453, -33.702075],
+            [151.307237, -33.739761],
+            [151.294220, -33.736329],
+            [151.301454, -33.700754]]]
 # can also be loaded from a .kml polygon
 # kml_polygon = os.path.join(os.getcwd(), 'examples', 'NARRA_polygon.kml')
 # polygon = SDS_tools.polygon_from_kml(kml_polygon)
+# or read from geojson polygon (create it from https://geojson.io/)
+# geojson_polygon = os.path.join(os.getcwd(), 'examples', 'NARRA_polygon.geojson')
+# polygon = SDS_tools.polygon_from_geojson(geojson_polygon)
 # convert polygon to a smallest rectangle (sides parallel to coordinate axes)
 polygon = SDS_tools.smallest_rectangle(polygon)
 
-# # date range
-dates = ['2020-01-01', '2020-03-01']
+# date range
+dates = ['1984-01-01', '2022-01-01']
 
-# # satellite missions
-sat_list = ['L5','L7','L8','L9','S2']
+# satellite missions
+sat_list = ['L5','L7','L8']
 collection = 'C02' # choose Landsat collection 'C01' or 'C02'
-# # name of the site
-sitename = 'FLOREAT'
+# name of the site
+sitename = 'NARRA'
 
-# # filepath where data will be stored
+# filepath where data will be stored
 filepath_data = os.path.join(os.getcwd(), 'data')
 
-# # put all the inputs into a dictionnary
+# put all the inputs into a dictionnary
 inputs = {
     'polygon': polygon,
     'dates': dates,
@@ -58,8 +59,8 @@ inputs = {
     'landsat_collection': collection
         }
 
-# # before downloading the images, check how many images are available for your inputs
-# SDS_download.check_images_available(inputs);
+# before downloading the images, check how many images are available for your inputs
+SDS_download.check_images_available(inputs);
 
 #%% 2. Retrieve images
 
@@ -77,9 +78,9 @@ metadata = SDS_download.get_metadata(inputs)
 # settings for the shoreline extraction
 settings = {
     # general parameters:
-    'cloud_thresh': 0.5,        # threshold on maximum cloud cover
-    'dist_clouds': 0,         # ditance around clouds where shoreline can't be mapped
-    'output_epsg': 28350,       # epsg code of spatial reference system desired for the output
+    'cloud_thresh': 0.1,        # threshold on maximum cloud cover
+    'dist_clouds': 300,         # ditance around clouds where shoreline can't be mapped
+    'output_epsg': 28356,       # epsg code of spatial reference system desired for the output
     # quality control:
     'check_detection': False,    # if True, shows each shoreline detection to the user for validation
     'adjust_detection': False,  # if True, allows user to adjust the postion of each shoreline by changing the threhold
@@ -87,16 +88,22 @@ settings = {
     # [ONLY FOR ADVANCED USERS] shoreline detection parameters:
     'min_beach_area': 1000,     # minimum area (in metres^2) for an object to be labelled as a beach
     'min_length_sl': 500,       # minimum length (in metres) of shoreline perimeter to be valid
-    'cloud_mask_issue': True,  # switch this parameter to True if sand pixels are masked (in black) on many images
-    'sand_color': 'bright',    # 'default', 'latest', 'dark' (for grey/black sand beaches) or 'bright' (for white sand beaches)
+    'cloud_mask_issue': False,  # switch this parameter to True if sand pixels are masked (in black) on many images
+    'sand_color': 'default',    # 'default', 'latest', 'dark' (for grey/black sand beaches) or 'bright' (for white sand beaches)
     'pan_off': False,           # True to switch pansharpening off for Landsat 7/8/9 imagery
+    's2cloudless_prob': 40,      # threshold to identify cloud pixels in the s2cloudless probability mask
     # add the inputs defined previously
     'inputs': inputs,
 }
 
 # [OPTIONAL] preprocess images (cloud masking, pansharpening/down-sampling)
-SDS_preprocess.save_jpg(metadata, settings)
-#%%
+SDS_preprocess.save_jpg(metadata, settings, use_matplotlib=True)
+# create MP4 timelapse animation
+fn_animation = os.path.join(inputs['filepath'],inputs['sitename'], '%s_animation_RGB.mp4'%inputs['sitename'])
+fp_images = os.path.join(inputs['filepath'], inputs['sitename'], 'jpg_files', 'preprocessed')
+fps = 4 # frames per second in animation
+SDS_tools.make_animation_mp4(fp_images, fps, fn_animation)
+
 # [OPTIONAL] create a reference shoreline (helps to identify outliers and false detections)
 settings['reference_shoreline'] = SDS_preprocess.get_reference_sl(metadata, settings)
 # set the max distance (in meters) allowed from the reference shoreline for a detected shoreline to be valid
@@ -104,9 +111,9 @@ settings['max_dist_ref'] = 100
 
 # extract shorelines from all images (also saves output.pkl and shorelines.kml)
 output = SDS_shoreline.extract_shorelines(metadata, settings)
-#%%
+
 # remove duplicates (images taken on the same date by the same satellite)
-# output = SDS_tools.remove_duplicates(output)
+output = SDS_tools.remove_duplicates(output)
 # remove inaccurate georeferencing (set threshold to 10 m)
 output = SDS_tools.remove_inaccurate_georef(output, 10)
 
@@ -119,6 +126,12 @@ gdf.crs = {'init':'epsg:'+str(settings['output_epsg'])} # set layer projection
 # save GEOJSON layer to file
 gdf.to_file(os.path.join(inputs['filepath'], inputs['sitename'], '%s_output_%s.geojson'%(sitename,geomtype)),
                                 driver='GeoJSON', encoding='utf-8')
+
+# create MP4 timelapse animation
+fn_animation = os.path.join(inputs['filepath'],inputs['sitename'], '%s_animation_shorelines.mp4'%inputs['sitename'])
+fp_images = os.path.join(inputs['filepath'], inputs['sitename'], 'jpg_files', 'detection')
+fps = 4 # frames per second in animation
+SDS_tools.make_animation_mp4(fp_images, fps, fn_animation)
 
 # plot the mapped shorelines
 plt.ion()
@@ -194,7 +207,7 @@ settings_transects = { # parameters for computing intersections
                       'max_range':           30,        # max range for points around transect
                       'min_chainage':        -100,      # largest negative value along transect (landwards of transect origin)
                       'multiple_inter':      'auto',    # mode for removing outliers ('auto', 'nan', 'max')
-                      'prc_multiple':         0.1,      # percentage to use in 'auto' mode to switch from 'nan' to 'max'
+                      'auto_prc':            0.1,      # percentage to use in 'auto' mode to switch from 'nan' to 'max'
                      }
 cross_distance = SDS_transects.compute_intersection_QC(output, transects, settings_transects)
 
@@ -240,7 +253,7 @@ print('Time-series of the shoreline change along the transects saved as:\n%s'%fn
 # load the measured tide data
 filepath = os.path.join(os.getcwd(),'examples','NARRA_tides.csv')
 tide_data = pd.read_csv(filepath, parse_dates=['dates'])
-dates_ts = [_.to_pydatetime() for _ in tide_data['dates']]
+dates_ts = [pd.to_datetime(_).to_pydatetime() for _ in tide_data['dates']]
 tides_ts = np.array(tide_data['tide'])
 
 # get tide levels corresponding to the time of image acquisition
@@ -359,7 +372,7 @@ for key in cross_distance.keys():
 
     # plot seasonal averages
     fig,ax=plt.subplots(1,1,figsize=[14,4],tight_layout=True)
-    ax.grid(b=True,which='major', linestyle=':', color='0.5')
+    ax.grid(which='major', linestyle=':', color='0.5')
     ax.set_title('Time-series at %s'%key, x=0, ha='left')
     ax.set(ylabel='distance [m]')
     ax.plot(dates_nonan, chainage,'+', lw=1, color='k', mfc='w', ms=4, alpha=0.5,label='raw datapoints')
@@ -385,7 +398,7 @@ for key in cross_distance.keys():
 
     # plot seasonal averages
     fig,ax=plt.subplots(1,1,figsize=[14,4],tight_layout=True)
-    ax.grid(b=True,which='major', linestyle=':', color='0.5')
+    ax.grid(which='major', linestyle=':', color='0.5')
     ax.set_title('Time-series at %s'%key, x=0, ha='left')
     ax.set(ylabel='distance [m]')
     ax.plot(dates_nonan, chainage,'+', lw=1, color='k', mfc='w', ms=4, alpha=0.5,label='raw datapoints')
